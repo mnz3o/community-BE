@@ -112,7 +112,8 @@ public class CommentService {
     private User findUser(
             int userId
     ) {
-        return userRepository.findById(userId)
+        return userRepository
+                .findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() ->
                         new CustomException(
                                 ErrorCode.USER_NOT_FOUND

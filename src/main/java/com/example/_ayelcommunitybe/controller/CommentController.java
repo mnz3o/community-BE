@@ -5,8 +5,6 @@ import com.example._ayelcommunitybe.dto.comment.CommentCreateResponseDto;
 import com.example._ayelcommunitybe.dto.comment.CommentRequestDto;
 import com.example._ayelcommunitybe.dto.comment.CommentResponseDto;
 import com.example._ayelcommunitybe.service.CommentService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,15 +24,10 @@ public class CommentController {
     @PostMapping
     public ApiResponse<CommentCreateResponseDto> createComment(
             @PathVariable int postId,
-            @Valid @RequestBody CommentRequestDto request,
-            HttpServletRequest httpRequest
+            @RequestAttribute("user_id")
+            int userId,
+            @Valid @RequestBody CommentRequestDto request
     ) {
-
-        HttpSession session =
-                httpRequest.getSession(false);
-
-        int userId =
-                (int) session.getAttribute("user_id");
 
         int commentId = commentService.createComment(
                 userId,
@@ -64,15 +57,12 @@ public class CommentController {
     @PatchMapping("/{commentId}")
     public ApiResponse<Void> updateComment(
             @PathVariable int commentId,
-            @Valid @RequestBody CommentRequestDto request,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int userId,
+
+            @Valid @RequestBody CommentRequestDto request
     ) {
-
-        HttpSession session =
-                httpRequest.getSession(false);
-
-        int userId =
-                (int) session.getAttribute("user_id");
 
         commentService.updateComment(
                 userId,
@@ -89,14 +79,10 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ApiResponse<Void> deleteComment(
             @PathVariable int commentId,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int userId
     ) {
-
-        HttpSession session =
-                httpRequest.getSession(false);
-
-        int userId =
-                (int) session.getAttribute("user_id");
 
         commentService.deleteComment(
                 userId,

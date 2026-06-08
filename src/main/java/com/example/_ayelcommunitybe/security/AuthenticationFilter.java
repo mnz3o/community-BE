@@ -33,10 +33,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (uri.equals("/auth/check") && method.equals("GET")) {
-            return true;
-        }
-
         if (uri.startsWith("/posts") && method.equals("GET")) {
             return true;
         }
@@ -51,12 +47,31 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
+        HttpSession session =
+                request.getSession(false);
 
-        if (session == null || session.getAttribute("user_id") == null) {
-            throw new CustomException(ErrorCode.LOGIN_REQUIRED);
+        if (
+                session == null ||
+                        session.getAttribute("user_id") == null
+        ) {
+            throw new CustomException(
+                    ErrorCode.LOGIN_REQUIRED
+            );
         }
 
-        filterChain.doFilter(request, response);
+        int userId =
+                (int) session.getAttribute(
+                        "user_id"
+                );
+
+        request.setAttribute(
+                "user_id",
+                userId
+        );
+
+        filterChain.doFilter(
+                request,
+                response
+        );
     }
 }

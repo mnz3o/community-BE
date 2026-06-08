@@ -2,8 +2,6 @@ package com.example._ayelcommunitybe.controller;
 
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.service.PostLikeService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,12 +16,10 @@ public class PostLikeController {
     @PostMapping
     public ApiResponse<Void> createLike(
             @PathVariable int postId,
-            HttpServletRequest request
+
+            @RequestAttribute("user_id")
+            int userId
     ) {
-
-        HttpSession session = request.getSession(false);
-
-        int userId = (int) session.getAttribute("user_id");
 
         postLikeService.createLike(
                 userId,
@@ -39,12 +35,10 @@ public class PostLikeController {
     @DeleteMapping
     public ApiResponse<Void> deleteLike(
             @PathVariable int postId,
-            HttpServletRequest request
+
+            @RequestAttribute("user_id")
+            int userId
     ) {
-
-        HttpSession session = request.getSession(false);
-
-        int userId = (int) session.getAttribute("user_id");
 
         postLikeService.deleteLike(
                 userId,

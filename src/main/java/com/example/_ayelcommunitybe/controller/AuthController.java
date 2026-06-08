@@ -67,25 +67,9 @@ public class AuthController  {
     // 로그인 상태 확인
     @GetMapping("/check")
     public ApiResponse<AuthCheckResponseDto> checkLogin(
-            HttpServletRequest request
+            @RequestAttribute("user_id")
+            int userId
     ) {
-
-        // 세션이 없거나 로그인하지 않은 경우
-        HttpSession session =
-                request.getSession(false);
-
-        if (
-                session == null ||
-                        session.getAttribute("user_id") == null
-        ) {
-            throw new CustomException(
-                    ErrorCode.LOGIN_REQUIRED
-            );
-        }
-
-        // 세션에 저장된 회원 ID 조회
-        int userId =
-                (int) session.getAttribute("user_id");
 
         User user =
                 userService.getEntity(userId);

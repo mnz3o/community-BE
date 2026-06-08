@@ -65,7 +65,7 @@ public class UserService {
     ) {
 
         // 본인만 수정 가능
-        validateUserAuthority(
+        validateUserOwner(
                 sessionUserId,
                 userId
         );
@@ -100,7 +100,7 @@ public class UserService {
     ) {
 
         // 본인만 수정 가능
-        validateUserAuthority(
+        validateUserOwner(
                 sessionUserId,
                 userId
         );
@@ -131,7 +131,7 @@ public class UserService {
     ) {
 
         // 본인만 탈퇴 가능
-        validateUserAuthority(
+        validateUserOwner(
                 sessionUserId,
                 userId
         );
@@ -191,7 +191,7 @@ public class UserService {
         return savedUser.getUserId();
     }
 
-    private void validateUserAuthority(
+    private void validateUserOwner(
             int sessionUserId,
             int userId
     ) {

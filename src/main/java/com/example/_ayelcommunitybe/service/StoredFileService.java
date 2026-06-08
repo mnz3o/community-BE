@@ -57,9 +57,17 @@ public class StoredFileService {
     // 프로필 파일 업로드
     @Transactional
     public StoredFileUploadResponseDto uploadProfileFile(
+            int sessionUserId,
             int userId,
             String fileUrl
     ) {
+
+        // 본인만 프로필 파일 업로드 가능
+        if (sessionUserId != userId) {
+            throw new CustomException(
+                    ErrorCode.FORBIDDEN
+            );
+        }
 
         User user = findUser(userId);
 

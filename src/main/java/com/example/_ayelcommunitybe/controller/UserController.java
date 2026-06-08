@@ -3,8 +3,6 @@ package com.example._ayelcommunitybe.controller;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.user.*;
 import com.example._ayelcommunitybe.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,16 +46,12 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ApiResponse<Void> updateUser(
             @PathVariable int userId,
-            @Valid @RequestBody UserUpdateRequestDto request,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int sessionUserId,
+
+            @Valid @RequestBody UserUpdateRequestDto request
     ) {
-
-        HttpSession session =
-                httpRequest.getSession(false);
-
-        int sessionUserId =
-                (int) session.getAttribute("user_id");
-
         userService.updateUser(
                 sessionUserId,
                 userId,
@@ -73,16 +67,12 @@ public class UserController {
     @PutMapping("/{userId}/password")
     public ApiResponse<Void> updatePassword(
             @PathVariable int userId,
-            @Valid @RequestBody PasswordUpdateRequestDto request,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int sessionUserId,
+
+            @Valid @RequestBody PasswordUpdateRequestDto request
     ) {
-
-        HttpSession session =
-                httpRequest.getSession(false);
-
-        int sessionUserId =
-                (int) session.getAttribute("user_id");
-
         userService.updatePassword(
                 sessionUserId,
                 userId,
@@ -98,15 +88,10 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ApiResponse<Void> deleteUser(
             @PathVariable int userId,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int sessionUserId
     ) {
-
-        HttpSession session =
-                httpRequest.getSession(false);
-
-        int sessionUserId =
-                (int) session.getAttribute("user_id");
-
         userService.deleteUser(
                 sessionUserId,
                 userId

@@ -3,8 +3,6 @@ package com.example._ayelcommunitybe.controller;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.service.PostService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,14 +19,11 @@ public class PostController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public ApiResponse<PostCreateResponseDto> createPost(
-            @Valid @RequestBody PostCreateRequestDto request,
-            HttpServletRequest httpRequest
+            @RequestAttribute("user_id")
+            int userId,
+            @Valid @RequestBody
+            PostCreateRequestDto request
     ) {
-
-        HttpSession session = httpRequest.getSession(false);
-
-        int userId = (int) session.getAttribute("user_id");
-
         int postId = postService.createPost(
                 userId,
                 request
@@ -75,13 +70,13 @@ public class PostController {
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePost(
             @PathVariable int postId,
-            @Valid @RequestBody PostUpdateRequestDto request,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int userId,
+
+            @Valid @RequestBody
+            PostUpdateRequestDto request
     ) {
-
-        HttpSession session = httpRequest.getSession(false);
-
-        int userId = (int) session.getAttribute("user_id");
 
         postService.updatePost(
                 userId,
@@ -98,12 +93,10 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ApiResponse<Void> deletePost(
             @PathVariable int postId,
-            HttpServletRequest httpRequest
+
+            @RequestAttribute("user_id")
+            int userId
     ) {
-
-        HttpSession session = httpRequest.getSession(false);
-
-        int userId = (int) session.getAttribute("user_id");
 
         postService.deletePost(
                 userId,

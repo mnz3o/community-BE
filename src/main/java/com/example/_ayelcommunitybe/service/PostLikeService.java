@@ -47,8 +47,6 @@ public class PostLikeService {
 
         // 게시글 좋아요 수 증가
         post.increaseLikeCount();
-
-        postRepository.save(post);
     }
 
     // 좋아요 취소
@@ -70,14 +68,13 @@ public class PostLikeService {
 
         // 게시글 좋아요 수 감소
         post.decreaseLikeCount();
-
-        postRepository.save(post);
     }
 
     private User findUser(
             int userId
     ) {
-        return userRepository.findById(userId)
+        return userRepository
+                .findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() ->
                         new CustomException(
                                 ErrorCode.USER_NOT_FOUND
@@ -88,7 +85,8 @@ public class PostLikeService {
     private Post findPost(
             int postId
     ) {
-        return postRepository.findByPostIdAndDeletedAtIsNull(postId)
+        return postRepository
+                .findByPostIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() ->
                         new CustomException(
                                 ErrorCode.POST_NOT_FOUND
