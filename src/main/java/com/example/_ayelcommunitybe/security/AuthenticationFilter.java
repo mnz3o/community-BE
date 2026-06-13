@@ -30,11 +30,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 인증 없이 접근 가능한 API
-        if (uri.equals("/auth") && method.equals("POST")) {
+        if (uri.endsWith("/auth") && method.equals("POST")) {
             return true;
         }
 
-        if (uri.equals("/users") && method.equals("POST")) {
+        if (uri.endsWith("/users") && method.equals("POST")) {
             return true;
         }
 
