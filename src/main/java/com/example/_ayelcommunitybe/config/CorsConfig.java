@@ -15,8 +15,12 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowCredentials(true);
+
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://127.0.0.1:3000");
+
+        // 배포 주소 추가
+        config.addAllowedOrigin("https://ayelcommunity.site");
 
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
