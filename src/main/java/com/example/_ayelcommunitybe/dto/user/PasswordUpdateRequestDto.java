@@ -1,12 +1,17 @@
 package com.example._ayelcommunitybe.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public record PasswordUpdateRequestDto(
-        @NotBlank(message = "현재 비밀번호를 입력해주세요.")
+
+        @NotBlank(message = "{user.password.current.required}")
         String currentPassword,
 
-        @NotBlank(message = "새 비밀번호를 입력해주세요.")
+        @NotBlank(message = "{user.password.new.required}")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,20}$",
+                message = "{user.password.invalid}")
         String newPassword
+
 ) {
 }

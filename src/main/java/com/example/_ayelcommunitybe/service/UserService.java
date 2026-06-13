@@ -1,11 +1,14 @@
 package com.example._ayelcommunitybe.service;
 
 import com.example._ayelcommunitybe.dto.user.*;
+import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
 import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
+import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import com.example._ayelcommunitybe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,44 +18,42 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final StoredFileRepository storedFileRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 로그인
-    public User login(
-            LoginRequestDto request
-    ) {
+    public User login(LoginRequestDto request) {
 
-        User user = userRepository.findByEmail(
-                        request.email()
-                )
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.email())
                 .orElseThrow(() ->
-                        new CustomException(
-                                ErrorCode.INVALID_LOGIN
-                        )
-                );
+                        new CustomException(ErrorCode.INVALID_LOGIN));
 
-        if (
-                !user.getPassword().equals(
-                        request.password()
-                )
-        ) {
-            throw new CustomException(
-                    ErrorCode.INVALID_LOGIN
-            );
+        // 비밀번호 일치 여부 확인
+        if (!passwordEncoder.matches(
+                request.password(),
+                user.getPassword())) {
+
+            throw new CustomException(ErrorCode.INVALID_LOGIN);
         }
 
         return user;
     }
 
     // 회원 조회
-    public UserResponseDto getUser(
-            int userId
-    ) {
+    public UserResponseDto getUser(int userId) {
 
         User user = findUser(userId);
 
+        // 활성화된 프로필 파일 조회
+        String profileFileUrl = storedFileRepository
+                .findByUserAndIsActiveTrue(user)
+                .map(StoredFile::getFileUrl)
+                .orElse(null);
+
         return new UserResponseDto(
                 user.getEmail(),
-                user.getNickname()
+                user.getNickname(),
+                profileFileUrl
         );
     }
 
@@ -61,34 +62,26 @@ public class UserService {
     public void updateUser(
             int sessionUserId,
             int userId,
-            UserUpdateRequestDto request
-    ) {
+            UserUpdateRequestDto request) {
 
-        // 본인만 수정 가능
-        validateUserOwner(
-                sessionUserId,
-                userId
-        );
+        validateUserOwner(sessionUserId, userId);
 
         User user = findUser(userId);
 
-        User duplicateUser = userRepository.findByNickname(
-                request.nickname()
-        ).orElse(null);
+        User duplicateUser = userRepository
+                .findByNickname(request.nickname())
+                .orElse(null);
 
         // 이미 사용 중인 닉네임인지 확인
-        if (
-                duplicateUser != null &&
-                        duplicateUser.getUserId() != userId
-        ) {
+        if (duplicateUser != null
+                && duplicateUser.getUserId() != userId) {
+
             throw new CustomException(
                     ErrorCode.DUPLICATE_NICKNAME
             );
         }
 
-        user.updateNickname(
-                request.nickname()
-        );
+        user.updateNickname(request.nickname());
     }
 
     // 비밀번호 수정
@@ -96,30 +89,26 @@ public class UserService {
     public void updatePassword(
             int sessionUserId,
             int userId,
-            PasswordUpdateRequestDto request
-    ) {
+            PasswordUpdateRequestDto request) {
 
-        // 본인만 수정 가능
-        validateUserOwner(
-                sessionUserId,
-                userId
-        );
+        validateUserOwner(sessionUserId, userId);
 
         User user = findUser(userId);
 
         // 현재 비밀번호 확인
-        if (
-                !user.getPassword().equals(
-                        request.currentPassword()
-                )
-        ) {
+        if (!passwordEncoder.matches(
+                request.currentPassword(),
+                user.getPassword())) {
+
             throw new CustomException(
                     ErrorCode.PASSWORD_MISMATCH
             );
         }
 
         user.updatePassword(
-                request.newPassword()
+                passwordEncoder.encode(
+                        request.newPassword()
+                )
         );
     }
 
@@ -127,14 +116,9 @@ public class UserService {
     @Transactional
     public void deleteUser(
             int sessionUserId,
-            int userId
-    ) {
+            int userId) {
 
-        // 본인만 탈퇴 가능
-        validateUserOwner(
-                sessionUserId,
-                userId
-        );
+        validateUserOwner(sessionUserId, userId);
 
         User user = findUser(userId);
 
@@ -143,38 +127,28 @@ public class UserService {
 
     // 회원가입
     @Transactional
-    public int signup(
-            SignupRequestDto request
-    ) {
+    public int signup(SignupRequestDto request) {
 
         // 이메일 중복 확인
-        if (
-                userRepository.existsByEmail(
-                        request.email()
-                )
-        ) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new CustomException(
                     ErrorCode.DUPLICATE_EMAIL
             );
         }
 
         // 비밀번호 확인
-        if (
-                !request.password().equals(
-                        request.passwordConfirm()
-                )
-        ) {
+        if (!request.password().equals(
+                request.passwordConfirm())) {
+
             throw new CustomException(
                     ErrorCode.PASSWORD_MISMATCH
             );
         }
 
         // 닉네임 중복 확인
-        if (
-                userRepository.existsByNickname(
-                        request.nickname()
-                )
-        ) {
+        if (userRepository.existsByNickname(
+                request.nickname())) {
+
             throw new CustomException(
                     ErrorCode.DUPLICATE_NICKNAME
             );
@@ -182,7 +156,9 @@ public class UserService {
 
         User user = new User(
                 request.email(),
-                request.password(),
+                passwordEncoder.encode(
+                        request.password()
+                ),
                 request.nickname()
         );
 
@@ -193,33 +169,22 @@ public class UserService {
 
     private void validateUserOwner(
             int sessionUserId,
-            int userId
-    ) {
+            int userId) {
 
+        // 본인만 회원 정보 수정 및 탈퇴 가능
         if (sessionUserId != userId) {
-            throw new CustomException(
-                    ErrorCode.FORBIDDEN
-            );
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }
 
-    private User findUser(
-            int userId
-    ) {
-        return userRepository
-                .findByUserIdAndDeletedAtIsNull(userId)
+    private User findUser(int userId) {
+        return userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() ->
-                        new CustomException(
-                                ErrorCode.USER_NOT_FOUND
-                        )
-                );
+                        new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     // 로그인한 사용자 엔티티 조회
-    public User getEntity(
-            int userId
-    ) {
-
+    public User getEntity(int userId) {
         return findUser(userId);
     }
 }

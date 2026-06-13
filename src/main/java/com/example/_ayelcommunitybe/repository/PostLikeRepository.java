@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface PostLikeRepository
         extends JpaRepository<PostLike, PostLikeId> {
 
-    // 사용자가 특정 게시글에 누른 좋아요 조회
+    // 사용자의 게시글 좋아요 조회
     Optional<PostLike> findByUserAndPost(
             User user,
             Post post

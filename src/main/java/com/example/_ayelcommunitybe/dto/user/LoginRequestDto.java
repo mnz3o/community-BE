@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequestDto(
 
-        @NotBlank(message = "이메일을 입력해주세요.")
-        @Email(message = "올바른 이메일 형식이 아닙니다.")
+        @NotBlank(message = "{user.email.required}")
+        @Email(message = "{user.email.invalid}")
         String email,
 
-        @NotBlank(message = "비밀번호를 입력해주세요.")
+        @NotBlank(message = "{user.password.required}")
         String password
 
 ) {

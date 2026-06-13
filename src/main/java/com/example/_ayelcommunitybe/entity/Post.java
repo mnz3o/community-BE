@@ -5,23 +5,26 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "posts")
-public class Post {
+public class Post extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
     private int postId;
 
-    // 게시글 작성자
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // 게시글(N)은 하나의 사용자(1)가 작성 가능
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "post") // 게시글(1)은 여러 파일(N)을 가질 수 있음
+    private List<StoredFile> files = new ArrayList<>();
 
     @Column(nullable = false)
     private String title;
@@ -38,15 +41,6 @@ public class Post {
     @Column(name = "comment_count")
     private int commentCount;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     // 게시글 생성
     public Post(
             User user,
@@ -60,9 +54,6 @@ public class Post {
         this.viewCount = 0;
         this.likeCount = 0;
         this.commentCount = 0;
-
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     // 게시글 수정
@@ -72,17 +63,6 @@ public class Post {
     ) {
         this.title = title;
         this.content = content;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    // 게시글 삭제
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    // 조회수 증가
-    public void increaseViewCount() {
-        this.viewCount++;
     }
 
     // 좋아요 증가
@@ -92,7 +72,9 @@ public class Post {
 
     // 좋아요 감소
     public void decreaseLikeCount() {
-        this.likeCount--;
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
     }
 
     // 댓글 증가
@@ -102,6 +84,8 @@ public class Post {
 
     // 댓글 감소
     public void decreaseCommentCount() {
-        this.commentCount--;
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
     }
 }

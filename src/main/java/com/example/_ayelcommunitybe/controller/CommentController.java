@@ -1,16 +1,15 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.comment.CommentCreateResponseDto;
+import com.example._ayelcommunitybe.dto.comment.CommentPageResponseDto;
 import com.example._ayelcommunitybe.dto.comment.CommentRequestDto;
-import com.example._ayelcommunitybe.dto.comment.CommentResponseDto;
 import com.example._ayelcommunitybe.service.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/posts/{postId}/comments")
@@ -24,8 +23,7 @@ public class CommentController {
     @PostMapping
     public ApiResponse<CommentCreateResponseDto> createComment(
             @PathVariable int postId,
-            @RequestAttribute("user_id")
-            int userId,
+            @RequestAttribute(SessionConst.USER_ID) int userId,
             @Valid @RequestBody CommentRequestDto request
     ) {
 
@@ -41,15 +39,21 @@ public class CommentController {
         );
     }
 
-    // 게시글의 댓글 목록 조회
+    // 댓글 목록 조회
     @GetMapping
-    public ApiResponse<List<CommentResponseDto>> getComments(
-            @PathVariable int postId
+    public ApiResponse<CommentPageResponseDto> getComments(
+            @PathVariable int postId,
+            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "10") int limit
     ) {
 
         return ApiResponse.success(
                 "댓글 목록 조회 성공",
-                commentService.getComments(postId)
+                commentService.getComments(
+                        postId,
+                        cursor,
+                        limit
+                )
         );
     }
 
@@ -57,10 +61,7 @@ public class CommentController {
     @PatchMapping("/{commentId}")
     public ApiResponse<Void> updateComment(
             @PathVariable int commentId,
-
-            @RequestAttribute("user_id")
-            int userId,
-
+            @RequestAttribute(SessionConst.USER_ID) int userId,
             @Valid @RequestBody CommentRequestDto request
     ) {
 
@@ -79,9 +80,7 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ApiResponse<Void> deleteComment(
             @PathVariable int commentId,
-
-            @RequestAttribute("user_id")
-            int userId
+            @RequestAttribute(SessionConst.USER_ID) int userId
     ) {
 
         commentService.deleteComment(

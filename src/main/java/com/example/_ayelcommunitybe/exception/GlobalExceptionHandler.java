@@ -32,17 +32,17 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException exception
     ) {
 
-        String message = exception
-                .getBindingResult()
-                .getFieldError()
-                .getDefaultMessage();
+        String message = exception.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("유효하지 않은 요청입니다.");
 
         return ResponseEntity
                 .badRequest()
                 .body(
-                        ApiResponse.fail(
-                                message
-                        )
+                        ApiResponse.fail(message)
                 );
     }
 }

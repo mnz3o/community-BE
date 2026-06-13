@@ -1,12 +1,11 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.user.AuthCheckResponseDto;
 import com.example._ayelcommunitybe.dto.user.LoginRequestDto;
 import com.example._ayelcommunitybe.dto.user.LoginResponseDto;
 import com.example._ayelcommunitybe.entity.User;
-import com.example._ayelcommunitybe.exception.CustomException;
-import com.example._ayelcommunitybe.exception.ErrorCode;
 import com.example._ayelcommunitybe.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController  {
+public class AuthController {
 
     private final UserService userService;
 
@@ -35,7 +34,7 @@ public class AuthController  {
 
         // 세션에 회원 ID 저장
         session.setAttribute(
-                "user_id",
+                SessionConst.USER_ID,
                 user.getUserId()
         );
 
@@ -67,12 +66,10 @@ public class AuthController  {
     // 로그인 상태 확인
     @GetMapping("/check")
     public ApiResponse<AuthCheckResponseDto> checkLogin(
-            @RequestAttribute("user_id")
-            int userId
+            @RequestAttribute(SessionConst.USER_ID) int userId
     ) {
 
-        User user =
-                userService.getEntity(userId);
+        User user = userService.getEntity(userId);
 
         return ApiResponse.success(
                 "로그인 상태 확인 성공",

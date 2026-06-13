@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.service.PostLikeService;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +17,7 @@ public class PostLikeController {
     @PostMapping
     public ApiResponse<Void> createLike(
             @PathVariable int postId,
-
-            @RequestAttribute("user_id")
-            int userId
+            @RequestAttribute(SessionConst.USER_ID) int userId
     ) {
 
         postLikeService.createLike(
@@ -35,15 +34,10 @@ public class PostLikeController {
     @DeleteMapping
     public ApiResponse<Void> deleteLike(
             @PathVariable int postId,
-
-            @RequestAttribute("user_id")
-            int userId
+            @RequestAttribute(SessionConst.USER_ID) int userId
     ) {
 
-        postLikeService.deleteLike(
-                userId,
-                postId
-        );
+        postLikeService.deleteLike(userId, postId);
 
         return ApiResponse.success(
                 "좋아요 취소 성공"

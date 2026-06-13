@@ -5,11 +5,11 @@ import jakarta.validation.constraints.Size;
 
 public record PostCreateRequestDto(
 
-        @NotBlank(message = "제목은 필수입니다.")
-        @Size(max = 26, message = "제목은 26자 이하입니다.")
+        @NotBlank(message = "{post.title.required}")
+        @Size(max = 26, message = "{post.title.max}")
         String title,
 
-        @NotBlank(message = "내용은 필수입니다.")
+        @NotBlank(message = "{post.content.required}")
         String content
 
 ) {

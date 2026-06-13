@@ -5,20 +5,15 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Getter
-
 /*
  JPA는 객체 생성 시 기본 생성자가 필요하다.
-
  외부에서 직접 생성하는 것을 막기 위해 protected로 제한한다.
 */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,15 +31,6 @@ public class User {
     @Column(nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     // 회원 생성
     public User(
             String email,
@@ -54,9 +40,6 @@ public class User {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     // 닉네임 수정
@@ -64,7 +47,6 @@ public class User {
             String nickname
     ) {
         this.nickname = nickname;
-        this.updatedAt = LocalDateTime.now();
     }
 
     // 비밀번호 수정
@@ -72,11 +54,5 @@ public class User {
             String password
     ) {
         this.password = password;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    // 회원 탈퇴
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
     }
 }

@@ -1,12 +1,15 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.user.*;
 import com.example._ayelcommunitybe.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/users")
@@ -16,18 +19,21 @@ public class UserController {
     private final UserService userService;
 
     // 회원가입
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ApiResponse<SignupResponseDto> signup(
+    public ResponseEntity<ApiResponse<SignupResponseDto>> signup(
             @Valid @RequestBody SignupRequestDto request
     ) {
 
         int userId = userService.signup(request);
 
-        return ApiResponse.success(
-                "회원가입 성공",
-                new SignupResponseDto(userId)
-        );
+        return ResponseEntity
+                .created(URI.create("/users/" + userId))
+                .body(
+                        ApiResponse.success(
+                                "회원가입 성공",
+                                new SignupResponseDto(userId)
+                        )
+                );
     }
 
     // 회원 조회
@@ -46,12 +52,10 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ApiResponse<Void> updateUser(
             @PathVariable int userId,
-
-            @RequestAttribute("user_id")
-            int sessionUserId,
-
+            @RequestAttribute(SessionConst.USER_ID) int sessionUserId,
             @Valid @RequestBody UserUpdateRequestDto request
     ) {
+
         userService.updateUser(
                 sessionUserId,
                 userId,
@@ -67,12 +71,10 @@ public class UserController {
     @PutMapping("/{userId}/password")
     public ApiResponse<Void> updatePassword(
             @PathVariable int userId,
-
-            @RequestAttribute("user_id")
-            int sessionUserId,
-
+            @RequestAttribute(SessionConst.USER_ID) int sessionUserId,
             @Valid @RequestBody PasswordUpdateRequestDto request
     ) {
+
         userService.updatePassword(
                 sessionUserId,
                 userId,
@@ -88,10 +90,9 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ApiResponse<Void> deleteUser(
             @PathVariable int userId,
-
-            @RequestAttribute("user_id")
-            int sessionUserId
+            @RequestAttribute(SessionConst.USER_ID) int sessionUserId
     ) {
+
         userService.deleteUser(
                 sessionUserId,
                 userId

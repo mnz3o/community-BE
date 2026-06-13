@@ -25,84 +25,59 @@ public class PostLikeService {
     @Transactional
     public void createLike(
             int userId,
-            int postId
-    ) {
+            int postId) {
 
         User user = findUser(userId);
         Post post = findPost(postId);
 
         // 중복 좋아요 방지
         if (postLikeRepository.findByUserAndPost(user, post).isPresent()) {
-            throw new CustomException(
-                    ErrorCode.ALREADY_LIKED
-            );
+            throw new CustomException(ErrorCode.ALREADY_LIKED);
         }
 
-        PostLike postLike = new PostLike(
-                user,
-                post
-        );
+        PostLike postLike = new PostLike(user, post);
 
         postLikeRepository.save(postLike);
 
-        // 게시글 좋아요 수 증가
-        post.increaseLikeCount();
+        // 좋아요 수 동기화
+        postRepository.increaseLikeCount(postId);
     }
 
     // 좋아요 취소
     @Transactional
     public void deleteLike(
             int userId,
-            int postId
-    ) {
+            int postId) {
 
         User user = findUser(userId);
         Post post = findPost(postId);
 
-        PostLike postLike = findPostLike(
-                user,
-                post
-        );
+        PostLike postLike = findPostLike(user, post);
 
         postLikeRepository.delete(postLike);
 
-        // 게시글 좋아요 수 감소
-        post.decreaseLikeCount();
+        // 좋아요 수 동기화
+        postRepository.decreaseLikeCount(postId);
     }
 
-    private User findUser(
-            int userId
-    ) {
-        return userRepository
-                .findByUserIdAndDeletedAtIsNull(userId)
+    private User findUser(int userId) {
+        return userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() ->
-                        new CustomException(
-                                ErrorCode.USER_NOT_FOUND
-                        )
-                );
+                        new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private Post findPost(
-            int postId
-    ) {
-        return postRepository
-                .findByPostIdAndDeletedAtIsNull(postId)
+    private Post findPost(int postId) {
+        return postRepository.findByPostIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() ->
-                        new CustomException(
-                                ErrorCode.POST_NOT_FOUND
-                        )
-                );
+                        new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 
     private PostLike findPostLike(
             User user,
-            Post post
-    ) {
+            Post post) {
+
         return postLikeRepository.findByUserAndPost(user, post)
                 .orElseThrow(() ->
-                        new CustomException(
-                                ErrorCode.LIKE_NOT_FOUND
-                        )
-                );
+                        new CustomException(ErrorCode.LIKE_NOT_FOUND));
     }
 }

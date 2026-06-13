@@ -22,36 +22,35 @@ public enum ErrorCode {
     // 회원
     USER_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "존재하지 않는 회원"
+            "존재하지 않는 회원입니다."
     ),
 
     DUPLICATE_EMAIL(
             HttpStatus.CONFLICT,
-            "중복 이메일"
+            "중복된 이메일입니다."
     ),
 
     DUPLICATE_NICKNAME(
             HttpStatus.CONFLICT,
-            "중복 닉네임"
+            "중복된 닉네임입니다."
     ),
 
     PASSWORD_MISMATCH(
             HttpStatus.BAD_REQUEST,
-            "비밀번호가 일치하지 않습니다."
+            "비밀번호가 다릅니다."
     ),
 
     // 게시글
     POST_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "존재하지 않는 게시글"
+            "존재하지 않는 게시글입니다."
     ),
 
     // 댓글
     COMMENT_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "존재하지 않는 댓글"
+            "존재하지 않는 댓글입니다."
     ),
-
     // 좋아요
     ALREADY_LIKED(
             HttpStatus.BAD_REQUEST,
@@ -67,7 +66,18 @@ public enum ErrorCode {
     FORBIDDEN(
             HttpStatus.FORBIDDEN,
             "권한이 없습니다."
-    );
+    ),
+
+    // 파일
+    INVALID_FILE_TYPE(
+            HttpStatus.BAD_REQUEST,
+            "지원하지 않는 파일 형식입니다."
+    ),
+
+    FILE_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "존재하지 않는 파일입니다."
+    );;;
 
     private final HttpStatus httpStatus;
     private final String message;

@@ -14,4 +14,8 @@ public interface StoredFileRepository
             User user
     );
 
+    // 활성화된 게시글 파일 조회
+    Optional<StoredFile> findByFileIdAndIsActiveTrue(
+            int fileId
+    );
 }

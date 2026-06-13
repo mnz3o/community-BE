@@ -1,12 +1,15 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/posts")
@@ -16,38 +19,51 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 작성
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ApiResponse<PostCreateResponseDto> createPost(
-            @RequestAttribute("user_id")
-            int userId,
-            @Valid @RequestBody
-            PostCreateRequestDto request
+    public ResponseEntity<ApiResponse<PostCreateResponseDto>> createPost(
+            @RequestAttribute(SessionConst.USER_ID) int userId,
+            @Valid @RequestBody PostCreateRequestDto request
     ) {
-        int postId = postService.createPost(
-                userId,
-                request
-        );
 
-        return ApiResponse.success(
-                "게시글 작성 성공",
-                new PostCreateResponseDto(postId)
-        );
+        int postId = postService.createPost(userId, request);
+
+        return ResponseEntity
+                .created(URI.create("/posts/" + postId))
+                .body(
+                        ApiResponse.success(
+                                "게시글 작성 성공",
+                                new PostCreateResponseDto(postId))
+                );
     }
 
     // 게시글 목록 조회
     @GetMapping
     public ApiResponse<PostPageResponseDto> getPosts(
-            @RequestParam(required = false)
-            Integer cursor,
-
-            @RequestParam(defaultValue = "10")
-            int limit
+            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "10") int limit
     ) {
 
         return ApiResponse.success(
                 "게시글 목록 조회 성공",
                 postService.getPosts(
+                        cursor,
+                        limit
+                )
+        );
+    }
+
+    // 게시글 검색
+    @GetMapping("/search")
+    public ApiResponse<PostPageResponseDto> searchPosts(
+            @RequestParam String keyword,
+            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+
+        return ApiResponse.success(
+                "게시글 검색 성공",
+                postService.searchPosts(
+                        keyword,
                         cursor,
                         limit
                 )
@@ -70,12 +86,8 @@ public class PostController {
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePost(
             @PathVariable int postId,
-
-            @RequestAttribute("user_id")
-            int userId,
-
-            @Valid @RequestBody
-            PostUpdateRequestDto request
+            @RequestAttribute(SessionConst.USER_ID) int userId,
+            @Valid @RequestBody PostUpdateRequestDto request
     ) {
 
         postService.updatePost(
@@ -93,9 +105,7 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ApiResponse<Void> deletePost(
             @PathVariable int postId,
-
-            @RequestAttribute("user_id")
-            int userId
+            @RequestAttribute(SessionConst.USER_ID) int userId
     ) {
 
         postService.deletePost(

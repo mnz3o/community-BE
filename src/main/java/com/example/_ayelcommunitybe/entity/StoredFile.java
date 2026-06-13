@@ -5,24 +5,22 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "stored_files")
-public class StoredFile {
+public class StoredFile extends CreatedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "file_id")
     private int fileId;
 
-    @OneToOne // 프로필 파일 (user 1 : 0..1 file)
+    @OneToOne // 사용자(1)는 하나의 프로필 파일(0..1)을 가질 수 있음
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne // 게시글 파일 (post 1 : 0..N file)
+    @ManyToOne(fetch = FetchType.LAZY) // 파일(N)은 하나의 게시글(1)에 속할 수 있음
     @JoinColumn(name = "post_id")
     private Post post;
 
@@ -31,9 +29,6 @@ public class StoredFile {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 
     public StoredFile(
             User user,
@@ -45,7 +40,6 @@ public class StoredFile {
         this.fileUrl = fileUrl;
 
         this.isActive = true;
-        this.createdAt = LocalDateTime.now();
     }
 
     // 파일 비활성화
