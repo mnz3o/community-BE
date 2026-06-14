@@ -4,6 +4,8 @@ import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.user.*;
 import com.example._ayelcommunitybe.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +23,18 @@ public class UserController {
     // 회원가입
     @PostMapping
     public ResponseEntity<ApiResponse<SignupResponseDto>> signup(
-            @Valid @RequestBody SignupRequestDto request
+            @Valid @RequestBody SignupRequestDto request,
+            HttpServletRequest httpRequest
     ) {
 
         int userId = userService.signup(request);
+
+        HttpSession session = httpRequest.getSession();
+
+        session.setAttribute(
+                SessionConst.USER_ID,
+                userId
+        );
 
         return ResponseEntity
                 .created(URI.create("/users/" + userId))
