@@ -5,6 +5,7 @@ import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
 import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
+import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import com.example._ayelcommunitybe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final StoredFileRepository storedFileRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserFinder userFinder;
 
     // 로그인
     public User login(LoginRequestDto request) {
@@ -42,7 +44,7 @@ public class UserService {
     // 회원 조회
     public UserResponseDto getUser(int userId) {
 
-        User user = findUser(userId);
+        User user = userFinder.findById(userId);
 
         // 활성화된 프로필 파일 조회
         String profileFileUrl = storedFileRepository
@@ -66,7 +68,7 @@ public class UserService {
 
         validateUserOwner(sessionUserId, userId);
 
-        User user = findUser(userId);
+        User user = userFinder.findById(userId);
 
         User duplicateUser = userRepository
                 .findByNickname(request.nickname())
@@ -93,7 +95,7 @@ public class UserService {
 
         validateUserOwner(sessionUserId, userId);
 
-        User user = findUser(userId);
+        User user = userFinder.findById(userId);
 
         // 현재 비밀번호 확인
         if (!passwordEncoder.matches(
@@ -120,7 +122,7 @@ public class UserService {
 
         validateUserOwner(sessionUserId, userId);
 
-        User user = findUser(userId);
+        User user = userFinder.findById(userId);
 
         user.delete();
     }
@@ -177,14 +179,8 @@ public class UserService {
         }
     }
 
-    private User findUser(int userId) {
-        return userRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
     // 로그인한 사용자 엔티티 조회
     public User getEntity(int userId) {
-        return findUser(userId);
+        return userFinder.findById(userId);
     }
 }

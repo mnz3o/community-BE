@@ -5,9 +5,10 @@ import com.example._ayelcommunitybe.entity.PostLike;
 import com.example._ayelcommunitybe.entity.User;
 import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
+import com.example._ayelcommunitybe.finder.PostFinder;
+import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.PostLikeRepository;
 import com.example._ayelcommunitybe.repository.PostRepository;
-import com.example._ayelcommunitybe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
-    private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final UserFinder userFinder;
+    private final PostFinder postFinder;
 
     // 좋아요 추가
     @Transactional
@@ -27,8 +29,8 @@ public class PostLikeService {
             int userId,
             int postId) {
 
-        User user = findUser(userId);
-        Post post = findPost(postId);
+        User user = userFinder.findById(userId);
+        Post post = postFinder.findById(postId);
 
         // 중복 좋아요 방지
         if (postLikeRepository.findByUserAndPost(user, post).isPresent()) {
@@ -49,8 +51,8 @@ public class PostLikeService {
             int userId,
             int postId) {
 
-        User user = findUser(userId);
-        Post post = findPost(postId);
+        User user = userFinder.findById(userId);
+        Post post = postFinder.findById(postId);
 
         PostLike postLike = findPostLike(user, post);
 
@@ -58,18 +60,6 @@ public class PostLikeService {
 
         // 좋아요 수 동기화
         postRepository.decreaseLikeCount(postId);
-    }
-
-    private User findUser(int userId) {
-        return userRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private Post findPost(int postId) {
-        return postRepository.findByPostIdAndDeletedAtIsNull(postId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 
     private PostLike findPostLike(

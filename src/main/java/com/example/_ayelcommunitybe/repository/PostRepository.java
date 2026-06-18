@@ -1,13 +1,11 @@
 package com.example._ayelcommunitybe.repository;
 
 import com.example._ayelcommunitybe.entity.Post;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository
@@ -23,23 +21,6 @@ public interface PostRepository
         """)
     int increaseViewCount(
             @Param("postId") int postId
-    );
-
-    // 게시글 목록 조회
-    @Query("""
-        select p
-        from Post p
-        join fetch p.user
-        where p.deletedAt is null
-          and (
-                :cursor is null
-                or p.postId < :cursor
-          )
-        order by p.postId desc
-        """)
-    List<Post> findPosts(
-            @Param("cursor") Integer cursor,
-            Pageable pageable
     );
 
     // 게시글 상세 조회

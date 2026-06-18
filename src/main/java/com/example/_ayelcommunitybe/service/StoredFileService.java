@@ -7,9 +7,10 @@ import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
 import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
+import com.example._ayelcommunitybe.finder.PostFinder;
+import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.PostRepository;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
-import com.example._ayelcommunitybe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +29,10 @@ import java.util.UUID;
 public class StoredFileService {
 
     private final StoredFileRepository storedFileRepository;
-    private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final FileProperties fileProperties;
+    private final UserFinder userFinder;
+    private final PostFinder postFinder;
 
     // 게시글 파일 업로드
     @Transactional
@@ -39,7 +41,7 @@ public class StoredFileService {
             int postId,
             MultipartFile file) throws IOException {
 
-        Post post = findPost(postId);
+        Post post = postFinder.findById(postId);
 
         // 작성자만 게시글 파일 관리 가능
         validatePostOwner(post, userId);
@@ -71,7 +73,7 @@ public class StoredFileService {
         // 본인만 프로필 수정 가능
         validateUserOwner(sessionUserId, userId);
 
-        User user = findUser(userId);
+        User user = userFinder.findById(userId);
 
         // 기존 프로필 파일은 비활성화
         storedFileRepository.findByUserAndIsActiveTrue(user)
@@ -128,7 +130,7 @@ public class StoredFileService {
 
         validateUserOwner(sessionUserId, userId);
 
-        User user = findUser(userId);
+        User user = userFinder.findById(userId);
 
         StoredFile profileFile =
                 storedFileRepository.findByUserAndIsActiveTrue(user)
@@ -136,18 +138,6 @@ public class StoredFileService {
                                 new CustomException(ErrorCode.FILE_NOT_FOUND));
 
         profileFile.deactivate();
-    }
-
-    private User findUser(int userId) {
-        return userRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private Post findPost(int postId) {
-        return postRepository.findByPostIdAndDeletedAtIsNull(postId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 
     private void validatePostOwner(
@@ -199,8 +189,6 @@ public class StoredFileService {
         Files.createDirectories(uploadPath);
 
         Path filePath = uploadPath.resolve(fileName);
-
-        System.out.println("저장 경로 = " + filePath);
 
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 

@@ -14,7 +14,6 @@ public class PostViewCountService {
 
     @Transactional
     public void increase(int postId) {
-        int result = postRepository.increaseViewCount(postId);
-        System.out.println("update result = " + result);
+        postRepository.increaseViewCount(postId);
     }
 }

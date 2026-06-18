@@ -30,3 +30,11 @@ file:
     - jpg
     - jpeg
     - gif
+
+server:
+  tomcat:
+    threads:
+      max: 20              # 최대 스레드 제한 (프리티어 메모리 고갈 방지)
+      min-spare: 5         # 최소 대기 스레드
+    max-connections: 500   # 최대 동시 연결 제한 (서버 다운 방지용 자원 방어벽)
+    accept-count: 50       # 톰캣 대기 큐 제한

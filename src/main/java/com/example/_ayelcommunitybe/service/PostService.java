@@ -1,18 +1,19 @@
 package com.example._ayelcommunitybe.service;
 
 import com.example._ayelcommunitybe.dto.post.PostCreateRequestDto;
+import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import com.example._ayelcommunitybe.dto.post.PostPageResponseDto;
 import com.example._ayelcommunitybe.dto.post.PostResponseDto;
 import com.example._ayelcommunitybe.dto.post.PostUpdateRequestDto;
-import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import com.example._ayelcommunitybe.entity.Post;
 import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
 import com.example._ayelcommunitybe.event.PostViewedEvent;
 import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
+import com.example._ayelcommunitybe.finder.PostFinder;
+import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.PostRepository;
-import com.example._ayelcommunitybe.repository.UserRepository;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,15 +31,17 @@ import java.util.List;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
     private final StoredFileRepository storedFileRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final MessageSource messageSource;
+    private final UserFinder userFinder;
+    private final PostFinder postFinder;
 
     // 게시글 작성
     @Transactional
     public int createPost(int userId, PostCreateRequestDto request) {
-        User user = findUser(userId);
+
+        User user = userFinder.findById(userId);
 
         Post post = new Post(
                 user,
@@ -47,6 +50,7 @@ public class PostService {
         );
 
         Post savedPost = postRepository.save(post);
+
         return savedPost.getPostId();
     }
 
@@ -57,55 +61,16 @@ public class PostService {
             int limit) {
 
         // 다음 페이지 존재 여부 확인을 위해 1개 더 조회
-        List<Post> posts = postRepository.searchPosts(
-                keyword,
-                cursor,
-                PageRequest.of(0, limit + 1)
-        );
+        List<PostListResponseDto> posts =
+                postRepository.searchPosts(
+                        keyword,
+                        cursor,
+                        PageRequest.of(0, limit + 1)
+                );
 
-        boolean hasNext = posts.size() > limit;
-
-        if (hasNext) {
-            posts.remove(limit);
-        }
-
-        List<PostListResponseDto> postResponses = posts.stream()
-                .map(post -> {
-                    User user = post.getUser();
-                    boolean isDeleted = user.getDeletedAt() != null;
-                    String nickname = isDeleted ? messageSource.getMessage("user.deleted.nickname", null, LocaleContextHolder.getLocale()) : user.getNickname();
-                    String profileFileUrl = null;
-                    if (!isDeleted) {
-                        profileFileUrl = storedFileRepository.findByUserAndIsActiveTrue(user)
-                                .map(StoredFile::getFileUrl)
-                                .orElse(null);
-                    }
-                    return new PostListResponseDto(
-                            post.getPostId(),
-                            post.getTitle(),
-                            nickname,
-                            post.getViewCount(),
-                            post.getLikeCount(),
-                            post.getCommentCount(),
-                            profileFileUrl,
-                            post.getCreatedAt()
-                    );
-                })
-                .toList();
-
-        // 다음 요청에 사용할 커서
-        Integer nextCursor = null;
-
-        if (hasNext) {
-            nextCursor = postResponses.get(
-                    postResponses.size() - 1
-            ).postId();
-        }
-
-        return new PostPageResponseDto(
-                postResponses,
-                nextCursor,
-                hasNext
+        return createPageResponse(
+                posts,
+                limit
         );
     }
 
@@ -113,19 +78,34 @@ public class PostService {
     @Transactional
     public PostResponseDto getPost(int postId) {
 
-        Post post = findPost(postId);
+        Post post = postFinder.findDetailById(postId);
 
         // 게시글 조회 이벤트 발행
-        eventPublisher.publishEvent(new PostViewedEvent(postId));
+        eventPublisher.publishEvent(
+                new PostViewedEvent(postId)
+        );
 
         User user = post.getUser();
-        boolean isDeleted = user.getDeletedAt() != null;
-        String nickname = isDeleted ? messageSource.getMessage("user.deleted.nickname", null, LocaleContextHolder.getLocale()) : user.getNickname();
+
+        boolean isDeleted =
+                user.getDeletedAt() != null;
+
+        String nickname = isDeleted
+                ? messageSource.getMessage(
+                "user.deleted.nickname",
+                null,
+                LocaleContextHolder.getLocale()
+        )
+                : user.getNickname();
+
         String profileFileUrl = null;
+
         if (!isDeleted) {
-            profileFileUrl = storedFileRepository.findByUserAndIsActiveTrue(user)
-                    .map(StoredFile::getFileUrl)
-                    .orElse(null);
+            profileFileUrl =
+                    storedFileRepository
+                            .findByUserAndIsActiveTrue(user)
+                            .map(StoredFile::getFileUrl)
+                            .orElse(null);
         }
 
         return new PostResponseDto(
@@ -150,7 +130,8 @@ public class PostService {
             int postId,
             PostUpdateRequestDto request) {
 
-        Post post = findPost(postId);
+        Post post =
+                postFinder.findDetailById(postId);
 
         validatePostOwner(post, userId);
 
@@ -166,55 +147,15 @@ public class PostService {
             int limit) {
 
         // 다음 페이지 존재 여부 확인을 위해 1개 더 조회
-        List<Post> posts = postRepository.findPosts(
-                cursor,
-                PageRequest.of(0, limit + 1)
-        );
+        List<PostListResponseDto> posts =
+                postRepository.findPosts(
+                        cursor,
+                        PageRequest.of(0, limit + 1)
+                );
 
-        boolean hasNext = posts.size() > limit;
-
-        // 다음 페이지가 존재하면 마지막 데이터 제거
-        if (hasNext) {
-            posts.remove(limit);
-        }
-
-        List<PostListResponseDto> postResponses = posts.stream()
-                .map(post -> {
-                    User user = post.getUser();
-                    boolean isDeleted = user.getDeletedAt() != null;
-                    String nickname = isDeleted ? messageSource.getMessage("user.deleted.nickname", null, LocaleContextHolder.getLocale()) : user.getNickname();
-                    String profileFileUrl = null;
-                    if (!isDeleted) {
-                        profileFileUrl = storedFileRepository.findByUserAndIsActiveTrue(user)
-                                .map(StoredFile::getFileUrl)
-                                .orElse(null);
-                    }
-                    return new PostListResponseDto(
-                            post.getPostId(),
-                            post.getTitle(),
-                            nickname,
-                            post.getViewCount(),
-                            post.getLikeCount(),
-                            post.getCommentCount(),
-                            profileFileUrl,
-                            post.getCreatedAt()
-                    );
-                })
-                .toList();
-
-        // 다음 요청에 사용할 커서
-        Integer nextCursor = null;
-
-        if (hasNext) {
-            nextCursor = postResponses.get(
-                    postResponses.size() - 1
-            ).postId();
-        }
-
-        return new PostPageResponseDto(
-                postResponses,
-                nextCursor,
-                hasNext
+        return createPageResponse(
+                posts,
+                limit
         );
     }
 
@@ -224,23 +165,12 @@ public class PostService {
             int userId,
             int postId) {
 
-        Post post = findPost(postId);
+        Post post =
+                postFinder.findDetailById(postId);
 
         validatePostOwner(post, userId);
 
         post.delete();
-    }
-
-    private User findUser(int userId) {
-        return userRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private Post findPost(int postId) {
-        return postRepository.findPostDetail(postId)
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 
     private void validatePostOwner(
@@ -249,16 +179,49 @@ public class PostService {
 
         // 작성자만 게시글 수정 및 삭제 가능
         if (post.getUser().getUserId() != userId) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
+            throw new CustomException(
+                    ErrorCode.FORBIDDEN
+            );
         }
     }
 
     // 활성화된 파일 URL만 조회
-    private List<String> getFileUrls(Post post) {
+    private List<String> getFileUrls(
+            Post post) {
+
         return post.getFiles()
                 .stream()
                 .filter(StoredFile::isActive)
                 .map(StoredFile::getFileUrl)
                 .toList();
+    }
+
+    // 게시글 목록 응답 생성
+    private PostPageResponseDto createPageResponse(
+            List<PostListResponseDto> posts,
+            int limit) {
+
+        boolean hasNext =
+                posts.size() > limit;
+
+        // 다음 페이지가 존재하면 마지막 데이터 제거
+        if (hasNext) {
+            posts.remove(limit);
+        }
+
+        Integer nextCursor = null;
+
+        // 다음 요청에 사용할 커서
+        if (hasNext) {
+            nextCursor = posts.get(
+                    posts.size() - 1
+            ).postId();
+        }
+
+        return new PostPageResponseDto(
+                posts,
+                nextCursor,
+                hasNext
+        );
     }
 }
