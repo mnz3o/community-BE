@@ -183,4 +183,12 @@ public class UserService {
     public User getEntity(int userId) {
         return userFinder.findById(userId);
     }
+
+    public String getProfileFileUrl(User user) {
+
+        return storedFileRepository
+                .findByUserAndIsActiveTrue(user)
+                .map(StoredFile::getFileUrl)
+                .orElse(null);
+    }
 }

@@ -70,13 +70,15 @@ public class AuthController {
     ) {
 
         User user = userService.getEntity(userId);
+        String profileFileUrl = userService.getProfileFileUrl(user);
 
         return ApiResponse.success(
                 "로그인 상태 확인 성공",
                 new AuthCheckResponseDto(
                         user.getUserId(),
                         user.getEmail(),
-                        user.getNickname()
+                        user.getNickname(),
+                        profileFileUrl
                 )
         );
     }
