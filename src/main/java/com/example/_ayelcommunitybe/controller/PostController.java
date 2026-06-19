@@ -6,9 +6,12 @@ import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.net.URI;
 
 @RestController
@@ -19,20 +22,41 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 작성
-    @PostMapping
+    @PostMapping(
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ApiResponse<PostCreateResponseDto>> createPost(
             @RequestAttribute(SessionConst.USER_ID) int userId,
-            @Valid @RequestBody PostCreateRequestDto request
-    ) {
+            @Valid
+            @RequestPart("post")
+            PostCreateRequestDto request,
+            @RequestPart(
+                    value = "file",
+                    required = false
+            )
+            MultipartFile file
+    ) throws IOException {
 
-        int postId = postService.createPost(userId, request);
+        int postId =
+                postService.createPost(
+                        userId,
+                        request,
+                        file
+                );
 
         return ResponseEntity
-                .created(URI.create("/posts/" + postId))
+                .created(
+                        URI.create(
+                                "/posts/" + postId
+                        )
+                )
                 .body(
                         ApiResponse.success(
                                 "게시글 작성 성공",
-                                new PostCreateResponseDto(postId))
+                                new PostCreateResponseDto(
+                                        postId
+                                )
+                        )
                 );
     }
 

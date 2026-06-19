@@ -22,7 +22,9 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -36,20 +38,39 @@ public class PostService {
     private final MessageSource messageSource;
     private final UserFinder userFinder;
     private final PostFinder postFinder;
+    private final StoredFileService storedFileService;
 
     // 게시글 작성
-    @Transactional
-    public int createPost(int userId, PostCreateRequestDto request) {
+    @Transactional(
+            rollbackFor = Exception.class
+    )
+    public int createPost(
+            int userId,
+            PostCreateRequestDto request,
+            MultipartFile file
+    ) throws IOException {
 
-        User user = userFinder.findById(userId);
+        User user =
+                userFinder.findById(userId);
 
-        Post post = new Post(
-                user,
-                request.title(),
-                request.content()
-        );
+        Post post =
+                new Post(
+                        user,
+                        request.title(),
+                        request.content()
+                );
 
-        Post savedPost = postRepository.save(post);
+        Post savedPost =
+                postRepository.save(post);
+
+        if (file != null
+                && !file.isEmpty()) {
+
+            storedFileService.savePostFile(
+                    savedPost,
+                    file
+            );
+        }
 
         return savedPost.getPostId();
     }

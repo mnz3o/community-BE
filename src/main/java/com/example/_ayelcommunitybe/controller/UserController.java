@@ -20,6 +20,30 @@ public class UserController {
 
     private final UserService userService;
 
+    // 이메일 중복 확인
+    @GetMapping("/check-email")
+    public ApiResponse<Boolean> checkEmail(
+            @RequestParam String email
+    ) {
+
+        return ApiResponse.success(
+                "이메일 중복 확인 성공",
+                userService.existsEmail(email)
+        );
+    }
+
+    // 닉네임 중복 확인
+    @GetMapping("/check-nickname")
+    public ApiResponse<Boolean> checkNickname(
+            @RequestParam String nickname
+    ) {
+
+        return ApiResponse.success(
+                "닉네임 중복 확인 성공",
+                userService.existsNickname(nickname)
+        );
+    }
+
     // 회원가입
     @PostMapping
     public ResponseEntity<ApiResponse<SignupResponseDto>> signup(

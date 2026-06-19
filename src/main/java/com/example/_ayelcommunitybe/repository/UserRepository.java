@@ -37,4 +37,9 @@ public interface UserRepository
     Optional<User> findByEmailAndDeletedAtIsNull(
             String email
     );
+
+    // 탈퇴하지 않은 이메일 중복 확인
+    boolean existsByEmailAndDeletedAtIsNull(
+            String email
+    );
 }

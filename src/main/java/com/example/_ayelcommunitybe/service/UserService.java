@@ -191,4 +191,24 @@ public class UserService {
                 .map(StoredFile::getFileUrl)
                 .orElse(null);
     }
+
+    // 이메일 중복 확인
+    public boolean existsEmail(
+            String email
+    ) {
+
+        return userRepository.existsByEmailAndDeletedAtIsNull(email);
+    }
+
+    // 닉네임 중복 확인
+    public boolean existsNickname(
+            String nickname
+    ) {
+
+        return userRepository
+                .existsByNickname(
+                        nickname
+                );
+    }
+
 }

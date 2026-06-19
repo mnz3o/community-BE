@@ -122,6 +122,23 @@ public class StoredFileService {
         file.deactivate();
     }
 
+    // 게시글 파일 저장
+    @Transactional
+    public void savePostFile(
+            Post post,
+            MultipartFile file
+    ) throws IOException {
+
+        String fileUrl = saveFile(file);
+
+        StoredFile storedFile =
+                new StoredFile(null, post, fileUrl);
+
+        storedFileRepository.save(
+                storedFile
+        );
+    }
+
     // 프로필 파일 삭제
     @Transactional
     public void deleteProfileFile(
