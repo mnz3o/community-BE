@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/communityDB?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1367@}
+    driver-class-name: com.mysql.cj.jdbc.Driver
