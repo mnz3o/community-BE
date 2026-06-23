@@ -38,6 +38,16 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (uri.contains("/users/check-email")
+                && method.equals("GET")) {
+            return true;
+        }
+
+        if (uri.contains("/users/check-nickname")
+                && method.equals("GET")) {
+            return true;
+        }
+
         // 공개 조회
         if (uri.startsWith("/posts") && method.equals("GET")) {
             return true;
