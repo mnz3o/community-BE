@@ -47,7 +47,7 @@ public class PostService {
     public int createPost(
             int userId,
             PostCreateRequestDto request,
-            MultipartFile file
+            List<MultipartFile> files
     ) throws IOException {
 
         User user =
@@ -63,12 +63,12 @@ public class PostService {
         Post savedPost =
                 postRepository.save(post);
 
-        if (file != null
-                && !file.isEmpty()) {
+        if (files != null
+                && !files.isEmpty()) {
 
             storedFileService.savePostFile(
                     savedPost,
-                    file
+                    files
             );
         }
 

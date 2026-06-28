@@ -21,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,31 +38,37 @@ public class StoredFileService {
 
     // 게시글 파일 업로드
     @Transactional
-    public StoredFileUploadResponseDto uploadPostFile(
+    public List<StoredFileUploadResponseDto> uploadPostFile(
             int userId,
             int postId,
-            MultipartFile file) throws IOException {
+            List<MultipartFile> files) throws IOException {
 
         Post post = postFinder.findById(postId);
 
         // 작성자만 게시글 파일 관리 가능
         validatePostOwner(post, userId);
 
-        String fileUrl = saveFile(file);
+        List<StoredFileUploadResponseDto> responses = new ArrayList<>();
 
-        StoredFile storedFile = new StoredFile(
-                null,
-                post,
-                fileUrl
-        );
+        // 첨부된 게시글 파일 저장
+        for (MultipartFile file : files) {
+            String fileUrl = saveFile(file);
 
-        StoredFile savedFile =
-                storedFileRepository.save(storedFile);
+            StoredFile storedFile = new StoredFile(
+                    null,
+                    post,
+                    fileUrl
+            );
 
-        return new StoredFileUploadResponseDto(
-                savedFile.getFileId(),
-                savedFile.getFileUrl()
-        );
+            StoredFile savedFile = storedFileRepository.save(storedFile);
+
+            responses.add(new StoredFileUploadResponseDto(
+                    savedFile.getFileId(),
+                    savedFile.getFileUrl()
+            ));
+        }
+
+        return responses;
     }
 
     // 프로필 파일 업로드
@@ -126,17 +134,21 @@ public class StoredFileService {
     @Transactional
     public void savePostFile(
             Post post,
-            MultipartFile file
+            List<MultipartFile> files
     ) throws IOException {
 
-        String fileUrl = saveFile(file);
+        // 첨부된 게시글 파일 저장
+        for (MultipartFile file : files) {
+            String fileUrl = saveFile(file);
 
-        StoredFile storedFile =
-                new StoredFile(null, post, fileUrl);
+            StoredFile storedFile = new StoredFile(
+                    null,
+                    post,
+                    fileUrl
+            );
 
-        storedFileRepository.save(
-                storedFile
-        );
+            storedFileRepository.save(storedFile);
+        }
     }
 
     // 프로필 파일 삭제

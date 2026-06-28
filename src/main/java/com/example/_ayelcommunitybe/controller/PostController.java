@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -31,17 +32,17 @@ public class PostController {
             @RequestPart("post")
             PostCreateRequestDto request,
             @RequestPart(
-                    value = "file",
+                    value = "files",
                     required = false
             )
-            MultipartFile file
+            List<MultipartFile> files
     ) throws IOException {
 
         int postId =
                 postService.createPost(
                         userId,
                         request,
-                        file
+                        files
                 );
 
         return ResponseEntity
