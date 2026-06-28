@@ -145,11 +145,15 @@ public class PostService {
     }
 
     // 게시글 수정
-    @Transactional
+    @Transactional(
+            rollbackFor = Exception.class
+    )
     public void updatePost(
             int userId,
             int postId,
-            PostUpdateRequestDto request) {
+            PostUpdateRequestDto request,
+            List<MultipartFile> files
+    ) throws IOException {
 
         Post post =
                 postFinder.findDetailById(postId);
@@ -160,6 +164,20 @@ public class PostService {
                 request.title(),
                 request.content()
         );
+
+        // 기존 파일 중 선택 해제된 것만 비활성화
+        post.getFiles().forEach(file -> {
+            if (request.existingFiles() == null ||
+                    !request.existingFiles().contains(file.getFileUrl())) {
+
+                file.deactivate();
+            }
+        });
+
+        // 새 파일 추가
+        if (files != null && !files.isEmpty()) {
+            storedFileService.savePostFile(post, files);
+        }
     }
 
     // 게시글 목록 조회

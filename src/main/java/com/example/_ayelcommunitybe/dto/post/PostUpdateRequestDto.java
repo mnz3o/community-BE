@@ -3,6 +3,8 @@ package com.example._ayelcommunitybe.dto.post;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public record PostUpdateRequestDto(
 
         @NotBlank(message = "{post.title.required}")
@@ -10,7 +12,8 @@ public record PostUpdateRequestDto(
         String title,
 
         @NotBlank(message = "{post.content.required}")
-        String content
+        String content,
 
+        List<String>existingFiles
 ) {
 }

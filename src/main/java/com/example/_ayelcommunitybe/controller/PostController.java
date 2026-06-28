@@ -108,17 +108,22 @@ public class PostController {
     }
 
     // 게시글 수정
-    @PatchMapping("/{postId}")
+    @PatchMapping(
+            value = "/{postId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ApiResponse<Void> updatePost(
             @PathVariable int postId,
             @RequestAttribute(SessionConst.USER_ID) int userId,
-            @Valid @RequestBody PostUpdateRequestDto request
-    ) {
+            @Valid @RequestPart("post") PostUpdateRequestDto request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
+    ) throws IOException {
 
         postService.updatePost(
                 userId,
                 postId,
-                request
+                request,
+                files
         );
 
         return ApiResponse.success(
