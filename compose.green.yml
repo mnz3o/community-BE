@@ -1,0 +1,33 @@
+services:
+  # BE Green 환경
+  be-green:
+    # SHA를 이미지 태그로 사용
+    image: registry.ayelcommunity.site/community-be:${BE_IMAGE_TAG}
+
+    # 컨테이너 종료 시 자동 재시작
+    restart: unless-stopped
+
+    # Green 환경 Host Port 8081
+    ports:
+      - "8081:8080"
+
+    # BE 환경 변수
+    env_file:
+      - .env
+
+    # 업로드 파일 유지
+    volumes:
+      - ./uploads:/app/uploads
+
+    # 컨테이너 리소스 제한
+    cpus: 1.0
+    mem_limit: 768m
+
+    # Green 환경 네트워크
+    networks:
+      - green_net
+
+networks:
+  # Green 환경 전용 네트워크
+  green_net:
+    driver: bridge
