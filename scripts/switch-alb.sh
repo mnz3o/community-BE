@@ -29,33 +29,30 @@ PREVIOUS_TG_ARN=$(aws elbv2 describe-target-groups \
   --query 'TargetGroups[0].TargetGroupArn' \
   --output text)
 
-echo "Target Group: $TARGET_TG_NAME"
-echo "새 Target Group Healthy 대기"
-
-if ! aws elbv2 wait target-in-service \
-  --target-group-arn "$TARGET_TG_ARN"; then
-
-  echo "Health Check 실패"
-  echo "BE ALB 전환 중단"
-  exit 1
-fi
-
-echo "새 Target Group Healthy 확인"
 echo "BE ALB 트래픽 전환: $TARGET_COLOR"
 
-if ! aws elbv2 modify-rule \
+aws elbv2 modify-rule \
   --rule-arn "$RULE_ARN" \
-  --actions Type=forward,TargetGroupArn="$TARGET_TG_ARN"; then
+  --actions Type=forward,TargetGroupArn="$TARGET_TG_ARN"
 
-  echo "ALB 전환 실패"
-  echo "기존 Target Group으로 복구"
+echo "새 Target Group Healthy 대기"
+
+if aws elbv2 wait target-in-service \
+  --target-group-arn "$TARGET_TG_ARN"; then
+
+  echo "새 Target Group Healthy"
+  echo "BE ALB 전환 완료"
+  echo "Active Color: $TARGET_COLOR"
+
+else
+
+  echo "Health Check 실패"
+  echo "기존 Target Group으로 롤백"
 
   aws elbv2 modify-rule \
     --rule-arn "$RULE_ARN" \
     --actions Type=forward,TargetGroupArn="$PREVIOUS_TG_ARN"
 
+  echo "롤백 완료"
   exit 1
 fi
-
-echo "BE ALB 전환 완료"
-echo "Active Color: $TARGET_COLOR"
