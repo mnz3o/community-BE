@@ -70,7 +70,7 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ap-northeast-2
 
-      # 현재 Target Group을 확인하여 반대편을 다음 배포 대상으로 결정
+          # 현재 Target Group을 확인하여 반대편을 다음 배포 대상으로 결정
       - name: 배포 대상 결정
         id: target
         run: |
@@ -79,7 +79,7 @@ jobs:
             --query 'Rules[0].Actions[0].TargetGroupArn' \
             --output text)
 
-        # Green이 활성 상태이면 Blue, 아니면 Green을 배포 대상으로 지정
+          # Green이 활성 상태이면 Blue, 아니면 Green을 배포 대상으로 지정
           if [[ "$CURRENT_TG" == *"community-be-green-tg"* ]]; then
             echo "color=blue" >> "$GITHUB_OUTPUT"
           else
