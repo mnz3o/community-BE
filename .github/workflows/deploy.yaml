@@ -46,7 +46,7 @@ jobs:
     # 이미지 빌드 성공 후 배포 진행
     needs: build
 
-    # PR에서는 배포하지 않고 main Push 시에만 배포
+    # PR에서는 배포 하지 않고 main Push 시에만 배포
     if: github.event_name == 'push'
 
     permissions:
