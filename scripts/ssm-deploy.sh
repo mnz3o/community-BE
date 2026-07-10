@@ -17,10 +17,10 @@ COMMAND_ID=$(aws ssm send-command \
   --document-name "AWS-RunShellScript" \
   --parameters "commands=[
     \"cd /home/ssm-user/community-app/be\",
-    \"curl -fsSLO https://raw.githubusercontent.com/100-hours-a-week/4-ayel-community-BE/main/compose.blue.yml\",
-    \"curl -fsSLO https://raw.githubusercontent.com/100-hours-a-week/4-ayel-community-BE/main/compose.green.yml\",
+    \"curl -fsSLO https://raw.githubusercontent.com/mnz3o/community-BE/main/compose.blue.yml\",
+    \"curl -fsSLO https://raw.githubusercontent.com/mnz3o/community-BE/main/compose.green.yml\",
     \"mkdir -p scripts\",
-    \"curl -fsSL -o scripts/deploy.sh https://raw.githubusercontent.com/100-hours-a-week/4-ayel-community-BE/main/scripts/deploy.sh\",
+    \"curl -fsSL -o scripts/deploy.sh https://raw.githubusercontent.com/mnz3o/community-BE/main/scripts/deploy.sh\",
     \"bash scripts/deploy.sh $IMAGE_TAG $TARGET_COLOR\"
   ]" \
   --query "Command.CommandId" \
