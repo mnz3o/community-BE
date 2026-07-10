@@ -38,15 +38,15 @@ BE_IMAGE_TAG="$IMAGE_TAG" docker compose \
 
 echo "Health Check 시작"
 
-# 새 컨테이너가 정상적으로 응답할 때까지 최대 10회 확인
-for i in {1..10}; do
+# 새 컨테이너가 정상적으로 응답할 때까지 최대 20회 확인
+for i in {1..20}; do
   if curl -fsS "http://localhost:${TARGET_PORT}/posts" > /dev/null; then
     echo "Health Check 성공"
     echo "BE $TARGET_COLOR 배포 완료"
     exit 0
   fi
 
-  echo "Health Check 재시도: $i/10"
+  echo "Health Check 재시도: $i/20"
   sleep 3
 done
 
