@@ -3,58 +3,41 @@ package com.example._ayelcommunitybe.controller;
 import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.storedfile.StoredFileUploadResponseDto;
+import com.example._ayelcommunitybe.service.S3Service;
 import com.example._ayelcommunitybe.service.StoredFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.List;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
 @RestController
 @RequiredArgsConstructor
 public class StoredFileController {
 
     private final StoredFileService storedFileService;
+    private final S3Service s3Service;
 
-    // 프로필 파일 업로드
-    @PostMapping("/users/{userId}/files")
-    public ApiResponse<StoredFileUploadResponseDto> uploadProfileFile(
-            @PathVariable int userId,
-            @RequestAttribute(SessionConst.USER_ID) int sessionUserId,
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
+    @PostMapping("/files/presigned-url")
+    public ApiResponse<StoredFileUploadResponseDto> getPresignedUrl(
+            @RequestParam String fileName,
+            @RequestParam String contentType
+    ) {
+
+        String objectKey = s3Service.createObjectKey(fileName);
+
+        PresignedPutObjectRequest presignedRequest =
+                s3Service.createPresignedPutObjectRequest(
+                        objectKey,
+                        contentType
+                );
 
         StoredFileUploadResponseDto response =
-                storedFileService.uploadProfileFile(
-                        sessionUserId,
-                        userId,
-                        file
+                new StoredFileUploadResponseDto(
+                        presignedRequest.url().toString(),
+                        s3Service.createFileUrl(objectKey)
                 );
 
         return ApiResponse.success(
-                "프로필 파일 업로드 성공",
-                response
-        );
-    }
-
-    // 게시글 파일 업로드
-    @PostMapping("/posts/{postId}/files")
-    public ApiResponse<List<StoredFileUploadResponseDto>> uploadPostFile(
-            @PathVariable int postId,
-            @RequestAttribute(SessionConst.USER_ID) int userId,
-            @RequestParam("files") List<MultipartFile> files
-    ) throws IOException {
-
-        List<StoredFileUploadResponseDto> response =
-                storedFileService.uploadPostFile(
-                        userId,
-                        postId,
-                        files
-                );
-
-        return ApiResponse.success(
-                "게시글 파일 업로드 성공",
+                "Presigned URL 발급 성공",
                 response
         );
     }

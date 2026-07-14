@@ -6,14 +6,10 @@ import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -23,26 +19,16 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 작성
-    @PostMapping(
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping
     public ResponseEntity<ApiResponse<PostCreateResponseDto>> createPost(
             @RequestAttribute(SessionConst.USER_ID) int userId,
-            @Valid
-            @RequestPart("post")
-            PostCreateRequestDto request,
-            @RequestPart(
-                    value = "files",
-                    required = false
-            )
-            List<MultipartFile> files
-    ) throws IOException {
+            @Valid @RequestBody PostCreateRequestDto request
+    ) {
 
         int postId =
                 postService.createPost(
                         userId,
-                        request,
-                        files
+                        request
                 );
 
         return ResponseEntity
@@ -108,22 +94,17 @@ public class PostController {
     }
 
     // 게시글 수정
-    @PatchMapping(
-            value = "/{postId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePost(
             @PathVariable int postId,
             @RequestAttribute(SessionConst.USER_ID) int userId,
-            @Valid @RequestPart("post") PostUpdateRequestDto request,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files
-    ) throws IOException {
+            @Valid @RequestBody PostUpdateRequestDto request
+    ) {
 
         postService.updatePost(
                 userId,
                 postId,
-                request,
-                files
+                request
         );
 
         return ApiResponse.success(

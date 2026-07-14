@@ -1,7 +1,5 @@
 package com.example._ayelcommunitybe.service;
 
-import com.example._ayelcommunitybe.config.FileProperties;
-import com.example._ayelcommunitybe.dto.storedfile.StoredFileUploadResponseDto;
 import com.example._ayelcommunitybe.entity.Post;
 import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
@@ -9,21 +7,10 @@ import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
 import com.example._ayelcommunitybe.finder.PostFinder;
 import com.example._ayelcommunitybe.finder.UserFinder;
-import com.example._ayelcommunitybe.repository.PostRepository;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,81 +18,8 @@ import java.util.UUID;
 public class StoredFileService {
 
     private final StoredFileRepository storedFileRepository;
-    private final PostRepository postRepository;
-    private final FileProperties fileProperties;
     private final UserFinder userFinder;
     private final PostFinder postFinder;
-
-    // 게시글 파일 업로드
-    @Transactional
-    public List<StoredFileUploadResponseDto> uploadPostFile(
-            int userId,
-            int postId,
-            List<MultipartFile> files) throws IOException {
-
-        Post post = postFinder.findById(postId);
-
-        // 작성자만 게시글 파일 관리 가능
-        validatePostOwner(post, userId);
-
-        List<StoredFileUploadResponseDto> responses = new ArrayList<>();
-
-        // 첨부된 게시글 파일 저장
-        for (MultipartFile file : files) {
-            String fileUrl = saveFile(file);
-
-            StoredFile storedFile = new StoredFile(
-                    null,
-                    post,
-                    fileUrl
-            );
-
-            StoredFile savedFile = storedFileRepository.save(storedFile);
-
-            responses.add(new StoredFileUploadResponseDto(
-                    savedFile.getFileId(),
-                    savedFile.getFileUrl()
-            ));
-        }
-
-        return responses;
-    }
-
-    // 프로필 파일 업로드
-    @Transactional
-    public StoredFileUploadResponseDto uploadProfileFile(
-            int sessionUserId,
-            int userId,
-            MultipartFile file) throws IOException {
-
-        // 본인만 프로필 수정 가능
-        validateUserOwner(sessionUserId, userId);
-
-        User user = userFinder.findById(userId);
-
-        // 기존 프로필 파일은 비활성화
-        storedFileRepository.findByUserAndIsActiveTrue(user)
-                .ifPresent(existing -> {
-                    storedFileRepository.delete(existing);
-                    storedFileRepository.flush();
-                });
-
-        String fileUrl = saveFile(file);
-
-        StoredFile storedFile = new StoredFile(
-                user,
-                null,
-                fileUrl
-        );
-
-        StoredFile savedFile =
-                storedFileRepository.save(storedFile);
-
-        return new StoredFileUploadResponseDto(
-                savedFile.getFileId(),
-                savedFile.getFileUrl()
-        );
-    }
 
     // 게시글 파일 삭제
     @Transactional
@@ -130,27 +44,6 @@ public class StoredFileService {
         file.deactivate();
     }
 
-    // 게시글 파일 저장
-    @Transactional
-    public void savePostFile(
-            Post post,
-            List<MultipartFile> files
-    ) throws IOException {
-
-        // 첨부된 게시글 파일 저장
-        for (MultipartFile file : files) {
-            String fileUrl = saveFile(file);
-
-            StoredFile storedFile = new StoredFile(
-                    null,
-                    post,
-                    fileUrl
-            );
-
-            storedFileRepository.save(storedFile);
-        }
-    }
-
     // 프로필 파일 삭제
     @Transactional
     public void deleteProfileFile(
@@ -173,7 +66,6 @@ public class StoredFileService {
             Post post,
             int userId) {
 
-        // 작성자만 게시글 파일 관리 가능
         if (post.getUser().getUserId() != userId) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
@@ -183,44 +75,8 @@ public class StoredFileService {
             int sessionUserId,
             int userId) {
 
-        // 본인만 프로필 수정 가능
         if (sessionUserId != userId) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
-    }
-
-    private String saveFile(
-            MultipartFile file) throws IOException {
-
-        String originalName = file.getOriginalFilename();
-
-        if (originalName == null) {
-            throw new CustomException(ErrorCode.INVALID_FILE_TYPE);
-        }
-
-        String extension = originalName.substring(
-                originalName.lastIndexOf(".") + 1
-        ).toLowerCase();
-
-        // 허용된 확장자만 업로드 가능
-        if (!fileProperties.getAllowedExtensions().contains(extension)) {
-            throw new CustomException(ErrorCode.INVALID_FILE_TYPE);
-        }
-
-        // UUID를 사용해 파일명 중복 방지
-        String fileName =
-                UUID.randomUUID() + "_" + originalName;
-
-        Path uploadPath = Paths.get(fileProperties.getUploadDir())
-                .toAbsolutePath()
-                .normalize();
-
-        Files.createDirectories(uploadPath);
-
-        Path filePath = uploadPath.resolve(fileName);
-
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        return "/uploads/" + fileName;
     }
 }

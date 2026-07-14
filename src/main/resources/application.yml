@@ -39,10 +39,20 @@ file:
 server:
   tomcat:
     threads:
+server:
+  tomcat:
+    threads:
       max: 20
       min-spare: 5
     max-connections: 500
     accept-count: 50
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: ${S3_BUCKET}
+      cloudfront-url: ${CLOUDFRONT_URL}
 
 management:
   endpoints:
