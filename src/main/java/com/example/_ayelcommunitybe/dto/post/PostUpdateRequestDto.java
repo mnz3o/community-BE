@@ -14,6 +14,6 @@ public record PostUpdateRequestDto(
         @NotBlank(message = "{post.content.required}")
         String content,
 
-        List<String>existingFiles
+        List<String> fileUrls
 ) {
 }

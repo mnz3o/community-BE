@@ -43,3 +43,10 @@ server:
       min-spare: 5         # 최소 대기 스레드
     max-connections: 500   # 최대 동시 연결 제한 (서버 다운 방지용 자원 방어벽)
     accept-count: 50       # 톰캣 대기 큐 제한
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: ${S3_BUCKET}
+      cloudfront-url: ${CLOUDFRONT_URL}

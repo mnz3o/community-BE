@@ -22,9 +22,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -38,7 +36,7 @@ public class PostService {
     private final MessageSource messageSource;
     private final UserFinder userFinder;
     private final PostFinder postFinder;
-    private final StoredFileService storedFileService;
+
 
     // 게시글 작성
     @Transactional(
@@ -46,9 +44,8 @@ public class PostService {
     )
     public int createPost(
             int userId,
-            PostCreateRequestDto request,
-            List<MultipartFile> files
-    ) throws IOException {
+            PostCreateRequestDto request
+    ) {
 
         User user =
                 userFinder.findById(userId);
@@ -63,13 +60,16 @@ public class PostService {
         Post savedPost =
                 postRepository.save(post);
 
-        if (files != null
-                && !files.isEmpty()) {
-
-            storedFileService.savePostFile(
-                    savedPost,
-                    files
-            );
+        if (request.fileUrls() != null) {
+            for (String fileUrl : request.fileUrls()) {
+                storedFileRepository.save(
+                        new StoredFile(
+                                null,
+                                savedPost,
+                                fileUrl
+                        )
+                );
+            }
         }
 
         return savedPost.getPostId();
@@ -151,9 +151,8 @@ public class PostService {
     public void updatePost(
             int userId,
             int postId,
-            PostUpdateRequestDto request,
-            List<MultipartFile> files
-    ) throws IOException {
+            PostUpdateRequestDto request
+    ) {
 
         Post post =
                 postFinder.findDetailById(postId);
@@ -167,16 +166,34 @@ public class PostService {
 
         // 기존 파일 중 선택 해제된 것만 비활성화
         post.getFiles().forEach(file -> {
-            if (request.existingFiles() == null ||
-                    !request.existingFiles().contains(file.getFileUrl())) {
+            if (request.fileUrls() == null ||
+                    !request.fileUrls().contains(file.getFileUrl())) {
 
                 file.deactivate();
             }
         });
 
         // 새 파일 추가
-        if (files != null && !files.isEmpty()) {
-            storedFileService.savePostFile(post, files);
+        if (request.fileUrls() != null) {
+
+            List<String> existingUrls =
+                    post.getFiles()
+                            .stream()
+                            .filter(StoredFile::isActive)
+                            .map(StoredFile::getFileUrl)
+                            .toList();
+
+            request.fileUrls().stream()
+                    .filter(fileUrl -> !existingUrls.contains(fileUrl))
+                    .forEach(fileUrl ->
+                            storedFileRepository.save(
+                                    new StoredFile(
+                                            null,
+                                            post,
+                                            fileUrl
+                                    )
+                            )
+                    );
         }
     }
 
