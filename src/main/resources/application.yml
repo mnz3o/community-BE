@@ -39,9 +39,6 @@ file:
 server:
   tomcat:
     threads:
-server:
-  tomcat:
-    threads:
       max: 20
       min-spare: 5
     max-connections: 500
