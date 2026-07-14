@@ -21,6 +21,8 @@ public record SignupRequestDto(
 
         @NotBlank(message = "{user.nickname.required}")
         @Size(max = 10, message = "{user.nickname.max}")
-        String nickname
+        String nickname,
+
+        String profileFileUrl
 ) {
 }

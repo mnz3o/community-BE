@@ -180,6 +180,18 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
+        // 프로필 이미지 저장
+        if (request.profileFileUrl() != null) {
+
+            StoredFile storedFile = new StoredFile(
+                    savedUser,
+                    null,
+                    request.profileFileUrl()
+            );
+
+            storedFileRepository.save(storedFile);
+        }
+
         return savedUser.getUserId();
     }
 
@@ -199,7 +211,6 @@ public class UserService {
     }
 
     public String getProfileFileUrl(User user) {
-
         return storedFileRepository
                 .findByUserAndIsActiveTrue(user)
                 .map(StoredFile::getFileUrl)
@@ -207,22 +218,12 @@ public class UserService {
     }
 
     // 이메일 중복 확인
-    public boolean existsEmail(
-            String email
-    ) {
-
+    public boolean existsEmail(String email) {
         return userRepository.existsByEmailAndDeletedAtIsNull(email);
     }
 
     // 닉네임 중복 확인
-    public boolean existsNickname(
-            String nickname
-    ) {
-
-        return userRepository
-                .existsByNickname(
-                        nickname
-                );
+    public boolean existsNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
     }
-
 }
