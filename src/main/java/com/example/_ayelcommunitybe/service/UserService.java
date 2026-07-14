@@ -85,10 +85,12 @@ public class UserService {
 
         user.updateNickname(request.nickname());
 
-        if (request.profileFileUrl() != null) {
+        // 기존 프로필 비활성화
+        storedFileRepository.findByUserAndIsActiveTrue(user)
+                .ifPresent(StoredFile::deactivate);
 
-            storedFileRepository.findByUserAndIsActiveTrue(user)
-                    .ifPresent(StoredFile::deactivate);
+        // 새 프로필이 있으면 저장
+        if (request.profileFileUrl() != null) {
 
             StoredFile storedFile = new StoredFile(
                     user,
