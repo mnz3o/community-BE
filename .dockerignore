@@ -1,0 +1,26 @@
+# Git
+.git
+.github
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Gradle
+.gradle
+build
+
+# Environment
+.env
+.env.*
+
+# Logs
+logs
+*.log
+
+# Local uploads
+uploads
+
+# Documentation
+HELP.md
