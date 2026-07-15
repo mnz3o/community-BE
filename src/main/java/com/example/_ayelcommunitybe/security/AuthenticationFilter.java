@@ -48,7 +48,14 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (uri.equals("/files/presigned-url")
+        // 프로필 Presigned URL
+        if (uri.equals("/users/profile-file/presigned-url")
+                && method.equals("POST")) {
+            return true;
+        }
+
+        // 게시글 Presigned URL
+        if (uri.equals("/posts/files/presigned-url")
                 && method.equals("POST")) {
             return true;
         }
