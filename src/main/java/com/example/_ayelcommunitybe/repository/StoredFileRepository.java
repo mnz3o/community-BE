@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface StoredFileRepository
         extends JpaRepository<StoredFile, Integer> {
 
+    Optional<StoredFile> findByUser(User user);
+
     // 활성화된 프로필 파일 조회
     Optional<StoredFile> findByUserAndIsActiveTrue(
             User user
