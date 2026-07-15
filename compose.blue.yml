@@ -15,10 +15,6 @@ services:
     env_file:
       - .env
 
-    # 업로드 파일 유지
-    volumes:
-      - ./uploads:/app/uploads
-
     # 컨테이너 리소스 제한
     cpus: 1.0
     mem_limit: 768m
