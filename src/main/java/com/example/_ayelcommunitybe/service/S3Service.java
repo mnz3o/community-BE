@@ -23,7 +23,11 @@ public class S3Service {
     @Value("${cloud.aws.s3.cloudfront-url}")
     private String cloudFrontUrl;
 
-    public String createObjectKey(String originalFilename) {
+    public String createProfileObjectKey(String originalFilename) {
+        return "profiles/" + UUID.randomUUID() + "_" + originalFilename;
+    }
+
+    public String createPostObjectKey(String originalFilename) {
         return "posts/" + UUID.randomUUID() + "_" + originalFilename;
     }
 

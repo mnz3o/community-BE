@@ -16,13 +16,15 @@ public class StoredFileController {
     private final StoredFileService storedFileService;
     private final S3Service s3Service;
 
-    @PostMapping("/files/presigned-url")
-    public ApiResponse<StoredFileUploadResponseDto> getPresignedUrl(
+    // 프로필 Presigned URL
+    @PostMapping("/users/profile-file/presigned-url")
+    public ApiResponse<StoredFileUploadResponseDto> getProfilePresignedUrl(
             @RequestParam String fileName,
             @RequestParam String contentType
     ) {
 
-        String objectKey = s3Service.createObjectKey(fileName);
+        String objectKey =
+                s3Service.createProfileObjectKey(fileName);
 
         PresignedPutObjectRequest presignedRequest =
                 s3Service.createPresignedPutObjectRequest(
@@ -30,15 +32,37 @@ public class StoredFileController {
                         contentType
                 );
 
-        StoredFileUploadResponseDto response =
+        return ApiResponse.success(
+                "프로필 Presigned URL 발급 성공",
                 new StoredFileUploadResponseDto(
                         presignedRequest.url().toString(),
                         s3Service.createFileUrl(objectKey)
+                )
+        );
+    }
+
+    // 게시글 Presigned URL
+    @PostMapping("/posts/files/presigned-url")
+    public ApiResponse<StoredFileUploadResponseDto> getPostPresignedUrl(
+            @RequestParam String fileName,
+            @RequestParam String contentType
+    ) {
+
+        String objectKey =
+                s3Service.createPostObjectKey(fileName);
+
+        PresignedPutObjectRequest presignedRequest =
+                s3Service.createPresignedPutObjectRequest(
+                        objectKey,
+                        contentType
                 );
 
         return ApiResponse.success(
-                "Presigned URL 발급 성공",
-                response
+                "게시글 Presigned URL 발급 성공",
+                new StoredFileUploadResponseDto(
+                        presignedRequest.url().toString(),
+                        s3Service.createFileUrl(objectKey)
+                )
         );
     }
 
