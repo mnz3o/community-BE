@@ -46,4 +46,9 @@ public class StoredFile extends CreatedEntity {
     public void deactivate() {
         this.isActive = false;
     }
+
+    public void updateFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
+        this.isActive = true;
+    }
 }

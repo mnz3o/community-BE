@@ -85,20 +85,33 @@ public class UserService {
 
         user.updateNickname(request.nickname());
 
-        // 기존 프로필 비활성화
-        storedFileRepository.findByUserAndIsActiveTrue(user)
-                .ifPresent(StoredFile::deactivate);
+        if (request.profileFileUrl() == null) {
 
-        // 새 프로필이 있으면 저장
-        if (request.profileFileUrl() != null) {
+            storedFileRepository.findByUser(user)
+                    .ifPresent(StoredFile::deactivate);
 
-            StoredFile storedFile = new StoredFile(
-                    user,
-                    null,
-                    request.profileFileUrl()
-            );
+        } else {
 
-            storedFileRepository.save(storedFile);
+            StoredFile storedFile = storedFileRepository
+                    .findByUser(user)
+                    .orElse(null);
+
+            if (storedFile == null) {
+
+                storedFileRepository.save(
+                        new StoredFile(
+                                user,
+                                null,
+                                request.profileFileUrl()
+                        )
+                );
+
+            } else {
+
+                storedFile.updateFileUrl(
+                        request.profileFileUrl()
+                );
+            }
         }
     }
 
