@@ -48,6 +48,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (uri.equals("/files/presigned-url")
+                && method.equals("POST")) {
+            return true;
+        }
+
         // 공개 조회
         if (uri.startsWith("/posts") && method.equals("GET")) {
             return true;
