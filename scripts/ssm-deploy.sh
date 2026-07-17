@@ -6,7 +6,7 @@ set -euo pipefail
 # 워크플로우에서 배포 정보와 App EC2 ID, 저장소 정보를 전달받음
 IMAGE_TAG=${1:?IMAGE_TAG가 필요합니다}
 TARGET_COLOR=${2:?TARGET_COLOR가 필요합니다}
-INSTANCE_A=${3:?INSTANCE_A가 필요합니다}
+INSTANCE_Aㅋ=${3:?INSTANCE_A가 필요합니다}
 INSTANCE_C=${4:?INSTANCE_C가 필요합니다}
 GITHUB_REPOSITORY=${5:?GITHUB_REPOSITORY가 필요합니다}
 

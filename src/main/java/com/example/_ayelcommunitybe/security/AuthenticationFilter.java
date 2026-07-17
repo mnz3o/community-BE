@@ -70,6 +70,12 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // Actuator Health Check
+        if (uri.equals("/actuator/health")
+                && method.equals("GET")) {
+            return true;
+        }
+
         return false;
     }
 
