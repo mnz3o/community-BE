@@ -66,7 +66,7 @@ echo "Health Check 시작"
 # 새 컨테이너 Health Check
 for i in {1..20}; do
 
-  if curl -fsS "http://localhost:${TARGET_PORT}/posts" > /dev/null; then
+  if curl -fsS "http://localhost:${TARGET_PORT}/actuator/health" > /dev/null; then
 
     echo "Health Check 성공"
 
@@ -102,6 +102,20 @@ EOF
 
 done
 
-
 echo "Health Check 실패"
+
+echo "컨테이너 로그 출력"
+
+docker compose \
+  -p "$PROJECT_NAME" \
+  -f "$COMPOSE_FILE" \
+  logs --tail=100
+
+echo "실패한 컨테이너 제거"
+
+docker compose \
+  -p "$PROJECT_NAME" \
+  -f "$COMPOSE_FILE" \
+  down
+
 exit 1
