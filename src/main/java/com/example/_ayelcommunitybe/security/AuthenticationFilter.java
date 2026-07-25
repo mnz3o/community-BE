@@ -61,7 +61,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 공개 조회
-        if (uri.startsWith("/posts") && method.equals("GET")) {
+        if (uri.contains("/posts") && method.equals("GET")) {
             return true;
         }
 
