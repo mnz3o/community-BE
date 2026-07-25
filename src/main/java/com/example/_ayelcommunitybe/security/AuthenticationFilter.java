@@ -61,7 +61,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 공개 조회
-        if (uri.contains("/posts") && method.equals("GET")) {
+        if (uri.startsWith("/posts") && method.equals("GET")) {
             return true;
         }
 
@@ -71,7 +71,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         }
 
         // Actuator Health Check
-        if (uri.equals("/actuator/health")
+        if (uri.startsWith("/actuator/health")
                 && method.equals("GET")) {
             return true;
         }
