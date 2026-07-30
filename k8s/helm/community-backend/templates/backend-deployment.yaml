@@ -1,0 +1,98 @@
+# backend-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ .Values.names.deployment }}
+  namespace: {{ .Values.namespace }}
+
+  labels:
+    app: {{ .Values.labels.app }}
+    tier: {{ .Values.labels.tier }}
+    env: {{ .Values.labels.env }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxUnavailable: {{ .Values.strategy.maxUnavailable }}
+      maxSurge: {{ .Values.strategy.maxSurge }}
+
+  selector:
+    matchLabels:
+      app: {{ .Values.labels.app }}
+      tier: {{ .Values.labels.tier }}
+      env: {{ .Values.labels.env }}
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.labels.app }}
+        tier: {{ .Values.labels.tier }}
+        env: {{ .Values.labels.env }}
+
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+
+      containers:
+        - name: {{ .Values.container.name }}
+
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.names.configMap }}
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.names.secret }}
+                  key: DB_PASSWORD
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: http
+
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}

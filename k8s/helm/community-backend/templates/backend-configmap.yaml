@@ -1,0 +1,20 @@
+# backend-configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: {{ .Values.names.configMap }}
+  namespace: {{ .Values.namespace }}
+
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.SPRING_PROFILES_ACTIVE | quote }}
+
+  DB_URL: {{ .Values.config.DB_URL | quote }}
+  DB_USERNAME: {{ .Values.config.DB_USERNAME | quote }}
+
+  REDIS_HOST: {{ .Values.config.REDIS_HOST | quote }}
+  REDIS_PORT: {{ .Values.config.REDIS_PORT | quote }}
+
+  S3_BUCKET: {{ .Values.config.S3_BUCKET | quote }}
+  CLOUDFRONT_URL: {{ .Values.config.CLOUDFRONT_URL | quote }}

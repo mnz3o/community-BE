@@ -1,0 +1,21 @@
+# backend-service.yaml
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ .Values.names.service }}
+  namespace: {{ .Values.namespace }}
+
+spec:
+  selector:
+    app: {{ .Values.labels.app }}
+    tier: {{ .Values.labels.tier }}
+    env: {{ .Values.labels.env }}
+
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+
+  type: {{ .Values.service.type }} 

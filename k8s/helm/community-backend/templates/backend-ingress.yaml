@@ -1,0 +1,35 @@
+# backend-ingress.yaml
+
+{{- if .Values.ingress.enabled }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: {{ .Values.ingress.name }}
+  namespace: {{ .Values.namespace }}
+
+  labels:
+    app: {{ .Values.labels.app }}
+    tier: {{ .Values.labels.tier }}
+    env: {{ .Values.labels.env }}
+
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+
+  rules:
+    - host: {{ .Values.ingress.host }}
+
+      http:
+        paths:
+          - path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
+
+            backend:
+              service:
+                name: {{ .Values.names.service }}
+
+                port:
+                  number: {{ .Values.service.port }}
+
+{{- end }}

@@ -1,0 +1,28 @@
+# backend-limitrange.yaml
+
+apiVersion: v1
+kind: LimitRange
+
+metadata:
+  name: {{ .Values.names.limitRange }}
+  namespace: {{ .Values.namespace }}
+
+spec:
+  limits:
+    - type: Container
+
+      min:
+        cpu: {{ .Values.limitRange.min.cpu | quote }}
+        memory: {{ .Values.limitRange.min.memory | quote }}
+
+      max:
+        cpu: {{ .Values.limitRange.max.cpu | quote }}
+        memory: {{ .Values.limitRange.max.memory | quote }}
+
+      defaultRequest:
+        cpu: {{ .Values.limitRange.defaultRequest.cpu | quote }}
+        memory: {{ .Values.limitRange.defaultRequest.memory | quote }}
+
+      default:
+        cpu: {{ .Values.limitRange.default.cpu | quote }}
+        memory: {{ .Values.limitRange.default.memory | quote }}
