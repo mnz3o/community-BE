@@ -1,7 +1,6 @@
 # values.yaml
 
 namespace: community-prod
-
 names:
   deployment: community-backend
   service: community-backend-service
@@ -10,42 +9,33 @@ names:
   secret: backend-secret
   resourceQuota: community-resource-quota
   limitRange: community-limit-range
-
 labels:
   app: community-backend
   tier: backend
   env: prod
-
 replicaCount: 3
 revisionHistoryLimit: 3
-
 strategy:
   maxUnavailable: 0
   maxSurge: 1
-
 imagePullSecret: registry-secret
-
 image:
   repository: registry.ayelcommunity.site/community-be
-  tag: "a2db738568d07b594a99666a0d10624487c9fda7"
+  tag: "e020d7c712a8a2b9c5a6cf6ec145c1efcaa98f3a"
   pullPolicy: IfNotPresent
-
 container:
   name: backend-container
   port: 8080
-
 service:
   type: ClusterIP
   port: 8080
-  
 ingress:
   enabled: true
   name: community-backend-ingress
   className: nginx
   host: ayelcommunity.site
   path: /
-  pathType: Prefix  
-
+  pathType: Prefix
 config:
   SPRING_PROFILES_ACTIVE: prod
   DB_URL: "jdbc:mysql://10.0.3.237:3306/communityDB?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
@@ -54,68 +44,54 @@ config:
   REDIS_PORT: "6379"
   S3_BUCKET: ayel-community-storage
   CLOUDFRONT_URL: d1hcjwklzu9rzi.cloudfront.net
-
 externalSecret:
   refreshInterval: 1h
-
   secretStoreRef:
     name: aws-secret-store
     kind: SecretStore
-
   target:
     creationPolicy: Owner
-
   remoteRef:
     key: community/backend
-
 resources:
   requests:
     cpu: "250m"
     memory: "500Mi"
-
   limits:
     cpu: "500m"
     memory: "1Gi"
-
 probes:
   startup:
     path: /actuator/health
     periodSeconds: 5
     failureThreshold: 30
     timeoutSeconds: 2
-
   readiness:
     path: /actuator/health/readiness
     periodSeconds: 10
     timeoutSeconds: 2
     failureThreshold: 2
-
   liveness:
     path: /actuator/health/liveness
     periodSeconds: 15
     timeoutSeconds: 2
     failureThreshold: 2
-
 resourceQuota:
   pods: "4"
   requestsCpu: "1.5"
   requestsMemory: "2Gi"
   limitsCpu: "3"
   limitsMemory: "4Gi"
-
 limitRange:
   min:
     cpu: "100m"
     memory: "300Mi"
-
   max:
     cpu: "1"
     memory: "1Gi"
-
   defaultRequest:
     cpu: "250m"
     memory: "400Mi"
-
   default:
     cpu: "500m"
     memory: "500Mi"
