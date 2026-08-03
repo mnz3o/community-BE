@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.post.*;
@@ -50,14 +51,25 @@ public class PostController {
     // 게시글 목록 조회
     @GetMapping
     public ApiResponse<PostPageResponseDto> getPosts(
-            @RequestParam(required = false) Integer cursor,
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(defaultValue = "LATEST")
+            PostSortType sort,
+
+            @RequestParam(required = false)
+            Integer cursorSortValue,
+
+            @RequestParam(required = false)
+            Integer cursorPostId,
+
+            @RequestParam(defaultValue = "10")
+            int limit
     ) {
 
         return ApiResponse.success(
                 "게시글 목록 조회 성공",
                 postService.getPosts(
-                        cursor,
+                        sort,
+                        cursorSortValue,
+                        cursorPostId,
                         limit
                 )
         );

@@ -2,6 +2,9 @@ spring:
   profiles:
     active: prod
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
   data:
     redis:
       host: ${REDIS_HOST}
@@ -37,6 +40,8 @@ file:
     - gif
 
 server:
+  shutdown: graceful
+
   tomcat:
     threads:
       max: 20

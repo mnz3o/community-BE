@@ -1,10 +1,7 @@
 package com.example._ayelcommunitybe.service;
 
-import com.example._ayelcommunitybe.dto.post.PostCreateRequestDto;
-import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
-import com.example._ayelcommunitybe.dto.post.PostPageResponseDto;
-import com.example._ayelcommunitybe.dto.post.PostResponseDto;
-import com.example._ayelcommunitybe.dto.post.PostUpdateRequestDto;
+import com.example._ayelcommunitybe.constant.PostSortType;
+import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.entity.Post;
 import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
@@ -74,24 +71,26 @@ public class PostService {
 
         return savedPost.getPostId();
     }
-
     // 게시글 검색
     public PostPageResponseDto searchPosts(
             String keyword,
             Integer cursor,
-            int limit) {
+            int limit
+    ) {
+        validateSearchKeyword(keyword);
 
         // 다음 페이지 존재 여부 확인을 위해 1개 더 조회
         List<PostListResponseDto> posts =
                 postRepository.searchPosts(
-                        keyword,
+                        keyword.trim(),
                         cursor,
                         PageRequest.of(0, limit + 1)
                 );
 
         return createPageResponse(
                 posts,
-                limit
+                limit,
+                PostSortType.LATEST
         );
     }
 
@@ -199,19 +198,25 @@ public class PostService {
 
     // 게시글 목록 조회
     public PostPageResponseDto getPosts(
-            Integer cursor,
-            int limit) {
+            PostSortType sort,
+            Integer cursorSortValue,
+            Integer cursorPostId,
+            int limit
+    ) {
 
         // 다음 페이지 존재 여부 확인을 위해 1개 더 조회
         List<PostListResponseDto> posts =
                 postRepository.findPosts(
-                        cursor,
+                        sort,
+                        cursorSortValue,
+                        cursorPostId,
                         PageRequest.of(0, limit + 1)
                 );
 
         return createPageResponse(
                 posts,
-                limit
+                limit,
+                sort
         );
     }
 
@@ -241,6 +246,14 @@ public class PostService {
         }
     }
 
+    private void validateSearchKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new CustomException(
+                    ErrorCode.INVALID_SEARCH_KEYWORD
+            );
+        }
+    }
+
     // 활성화된 파일 URL만 조회
     private List<String> getFileUrls(
             Post post) {
@@ -255,23 +268,38 @@ public class PostService {
     // 게시글 목록 응답 생성
     private PostPageResponseDto createPageResponse(
             List<PostListResponseDto> posts,
-            int limit) {
+            int limit,
+            PostSortType sort
+    ) {
 
-        boolean hasNext =
-                posts.size() > limit;
+        boolean hasNext = posts.size() > limit;
 
-        // 다음 페이지가 존재하면 마지막 데이터 제거
         if (hasNext) {
-            posts.remove(limit);
+            posts = List.copyOf(
+                    posts.subList(0, limit)
+            );
+        } else {
+            posts = List.copyOf(posts);
         }
 
-        Integer nextCursor = null;
+        PostCursorDto nextCursor = null;
 
-        // 다음 요청에 사용할 커서
-        if (hasNext) {
-            nextCursor = posts.get(
-                    posts.size() - 1
-            ).postId();
+        if (hasNext && !posts.isEmpty()) {
+
+            PostListResponseDto lastPost =
+                    posts.get(posts.size() - 1);
+
+            int sortValue =
+                    switch (sort) {
+                        case LATEST -> lastPost.postId();
+                        case VIEW -> lastPost.viewCount();
+                        case LIKE -> lastPost.likeCount();
+                    };
+
+            nextCursor = new PostCursorDto(
+                    sortValue,
+                    lastPost.postId()
+            );
         }
 
         return new PostPageResponseDto(

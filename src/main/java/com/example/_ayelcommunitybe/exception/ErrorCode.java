@@ -77,7 +77,12 @@ public enum ErrorCode {
     FILE_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "존재하지 않는 파일입니다."
-    );;;
+    ),
+
+    INVALID_SEARCH_KEYWORD(
+            HttpStatus.BAD_REQUEST,
+        "검색어를 입력해주세요."
+    );
 
     private final HttpStatus httpStatus;
     private final String message;

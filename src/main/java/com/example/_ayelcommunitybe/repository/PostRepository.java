@@ -18,6 +18,7 @@ public interface PostRepository
         update Post p
         set p.viewCount = p.viewCount + 1
         where p.postId = :postId
+          and p.deletedAt is null
         """)
     int increaseViewCount(
             @Param("postId") int postId
@@ -42,6 +43,7 @@ public interface PostRepository
     update Post p
     set p.likeCount = p.likeCount + 1
     where p.postId = :postId
+      and p.deletedAt is null
     """)
     int increaseLikeCount(
             @Param("postId") int postId
@@ -58,6 +60,7 @@ public interface PostRepository
             else 0
         end
     where p.postId = :postId
+      and p.deletedAt is null
     """)
     int decreaseLikeCount(
             @Param("postId") int postId
@@ -69,6 +72,7 @@ public interface PostRepository
     update Post p
     set p.commentCount = p.commentCount + 1
     where p.postId = :postId
+      and p.deletedAt is null
     """)
     int increaseCommentCount(
             @Param("postId") int postId
@@ -85,6 +89,7 @@ public interface PostRepository
             else 0
         end
     where p.postId = :postId
+      and p.deletedAt is null
     """)
     int decreaseCommentCount(
             @Param("postId") int postId
