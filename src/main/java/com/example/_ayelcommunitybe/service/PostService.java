@@ -294,6 +294,10 @@ public class PostService {
                         case LATEST -> lastPost.postId();
                         case VIEW -> lastPost.viewCount();
                         case LIKE -> lastPost.likeCount();
+                        case POPULAR ->
+                                lastPost.viewCount()
+                                + lastPost.likeCount() * 25
+                                + lastPost.commentCount() * 15;
                     };
 
             nextCursor = new PostCursorDto(

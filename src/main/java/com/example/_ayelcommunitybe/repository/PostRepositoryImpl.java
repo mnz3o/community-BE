@@ -4,12 +4,14 @@ import com.example._ayelcommunitybe.constant.PostSortType;
 import com.querydsl.core.types.OrderSpecifier;
 import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.example._ayelcommunitybe.entity.QPost.post;
@@ -56,6 +58,7 @@ public class PostRepositoryImpl
         return postListQuery()
                 .where(
                         post.deletedAt.isNull(),
+                        getPopularPeriodCondition(sort),
                         getCursorCondition(
                                 sort,
                                 cursorSortValue,
@@ -90,6 +93,12 @@ public class PostRepositoryImpl
             case LIKE ->
                     new OrderSpecifier[]{
                             post.likeCount.desc(),
+                            post.postId.desc()
+                    };
+
+            case POPULAR ->
+                    new OrderSpecifier[]{
+                            getPopularScore().desc(),
                             post.postId.desc()
                     };
         };
@@ -130,6 +139,15 @@ public class PostRepositoryImpl
                                     post.likeCount.eq(cursorSortValue)
                                             .and(post.postId.lt(cursorPostId))
                             );
+
+            case POPULAR -> {
+                NumberExpression<Integer> popularScore =
+                        getPopularScore();
+
+                yield popularScore.lt(cursorSortValue)
+                        .or(popularScore.eq(cursorSortValue)
+                                .and(post.postId.lt(cursorPostId)));
+            }
         };
     }
 
@@ -157,5 +175,23 @@ public class PostRepositoryImpl
                         storedFile.user.eq(post.user),
                         storedFile.isActive.isTrue()
                 );
+    }
+
+    private NumberExpression<Integer> getPopularScore() {
+
+        return post.viewCount
+                .add(post.likeCount.multiply(25))
+                .add(post.commentCount.multiply(15));
+    }
+
+    private BooleanExpression getPopularPeriodCondition(
+            PostSortType sort
+    ) {
+
+        if (sort != PostSortType.POPULAR) {
+            return null;
+        }
+
+        return post.createdAt.goe(LocalDateTime.now().minusDays(7));
     }
 }
