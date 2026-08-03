@@ -4,5 +4,6 @@ public enum PostSortType {
 
     LATEST,
     VIEW,
-    LIKE
+    LIKE,
+    POPULAR
 }
