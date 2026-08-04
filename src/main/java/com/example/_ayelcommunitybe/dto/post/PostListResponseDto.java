@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public record PostListResponseDto(
         int postId,
         String title,
+        String content,
         String nickname,
         int viewCount,
         int likeCount,
