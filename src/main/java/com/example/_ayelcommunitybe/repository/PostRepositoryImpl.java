@@ -6,7 +6,9 @@ import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class PostRepositoryImpl
         implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private static final int CONTENT_PREVIEW_LENGTH = 100;
 
     // 게시글 검색
     @Override
@@ -198,7 +201,7 @@ public class PostRepositoryImpl
                                 PostListResponseDto.class,
                                 post.postId,
                                 post.title,
-                                post.content,
+                                getContentPreview(),
                                 post.user.nickname,
                                 post.viewCount,
                                 post.likeCount,
@@ -263,5 +266,14 @@ public class PostRepositoryImpl
             case AUTHOR ->
                     post.user.nickname.contains(keyword);
         };
+    }
+
+    // 게시글 목록에 표시할 본문 앞 100자 조회
+    private StringExpression getContentPreview() {
+        return Expressions.stringTemplate(
+                "substring({0}, 1, {1})",
+                post.content,
+                CONTENT_PREVIEW_LENGTH
+        );
     }
 }
