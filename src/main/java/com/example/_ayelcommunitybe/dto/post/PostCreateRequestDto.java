@@ -12,6 +12,7 @@ public record PostCreateRequestDto(
         String title,
 
         @NotBlank(message = "{post.content.required}")
+        @Size(max = 1500, message = "{post.content.max}")
         String content,
 
         List<String> fileUrls

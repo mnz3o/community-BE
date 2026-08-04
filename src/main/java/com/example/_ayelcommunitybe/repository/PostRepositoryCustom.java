@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.repository;
 
+import com.example._ayelcommunitybe.constant.PostSearchType;
 import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import org.springframework.data.domain.Pageable;
@@ -8,10 +9,12 @@ import java.util.List;
 
 public interface PostRepositoryCustom {
 
-    // 게시글 검색
     List<PostListResponseDto> searchPosts(
             String keyword,
-            Integer cursor,
+            PostSearchType searchType,
+            PostSortType sort,
+            Integer cursorSortValue,
+            Integer cursorPostId,
             Pageable pageable
     );
 

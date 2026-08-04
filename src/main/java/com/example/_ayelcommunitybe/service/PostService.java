@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.service;
 
+import com.example._ayelcommunitybe.constant.PostSearchType;
 import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.entity.Post;
@@ -71,26 +72,34 @@ public class PostService {
 
         return savedPost.getPostId();
     }
+
     // 게시글 검색
     public PostPageResponseDto searchPosts(
             String keyword,
-            Integer cursor,
+            PostSearchType searchType,
+            PostSortType sort,
+            Integer cursorSortValue,
+            Integer cursorPostId,
             int limit
     ) {
+
         validateSearchKeyword(keyword);
 
         // 다음 페이지 존재 여부 확인을 위해 1개 더 조회
         List<PostListResponseDto> posts =
                 postRepository.searchPosts(
                         keyword.trim(),
-                        cursor,
+                        searchType,
+                        sort,
+                        cursorSortValue,
+                        cursorPostId,
                         PageRequest.of(0, limit + 1)
                 );
 
         return createPageResponse(
                 posts,
                 limit,
-                PostSortType.LATEST
+                sort
         );
     }
 
