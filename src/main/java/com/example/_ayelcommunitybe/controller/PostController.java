@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.controller;
 
+import com.example._ayelcommunitybe.constant.PostSearchType;
 import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
@@ -51,17 +52,10 @@ public class PostController {
     // 게시글 목록 조회
     @GetMapping
     public ApiResponse<PostPageResponseDto> getPosts(
-            @RequestParam(defaultValue = "LATEST")
-            PostSortType sort,
-
-            @RequestParam(required = false)
-            Integer cursorSortValue,
-
-            @RequestParam(required = false)
-            Integer cursorPostId,
-
-            @RequestParam(defaultValue = "10")
-            int limit
+            @RequestParam(defaultValue = "LATEST") PostSortType sort,
+            @RequestParam(required = false) Integer cursorSortValue,
+            @RequestParam(required = false) Integer cursorPostId,
+            @RequestParam(defaultValue = "10") int limit
     ) {
 
         return ApiResponse.success(
@@ -79,7 +73,10 @@ public class PostController {
     @GetMapping("/search")
     public ApiResponse<PostPageResponseDto> searchPosts(
             @RequestParam String keyword,
-            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "TITLE") PostSearchType searchType,
+            @RequestParam(defaultValue = "LATEST") PostSortType sort,
+            @RequestParam(required = false) Integer cursorSortValue,
+            @RequestParam(required = false) Integer cursorPostId,
             @RequestParam(defaultValue = "10") int limit
     ) {
 
@@ -87,7 +84,10 @@ public class PostController {
                 "게시글 검색 성공",
                 postService.searchPosts(
                         keyword,
-                        cursor,
+                        searchType,
+                        sort,
+                        cursorSortValue,
+                        cursorPostId,
                         limit
                 )
         );
