@@ -198,6 +198,7 @@ public class PostRepositoryImpl
                                 PostListResponseDto.class,
                                 post.postId,
                                 post.title,
+                                post.content,
                                 post.user.nickname,
                                 post.viewCount,
                                 post.likeCount,
