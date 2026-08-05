@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -66,6 +67,16 @@ public class PostController {
                         cursorPostId,
                         limit
                 )
+        );
+    }
+
+    // 주간 인기글 조회
+    @GetMapping("/popular/weekly")
+    public ApiResponse<List<PostListResponseDto>> getWeeklyPopularPosts() {
+
+        return ApiResponse.success(
+                "주간 인기글 조회 성공",
+                postService.getWeeklyPopularPosts()
         );
     }
 

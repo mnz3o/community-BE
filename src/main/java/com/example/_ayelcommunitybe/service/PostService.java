@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -213,7 +214,6 @@ public class PostService {
             int limit
     ) {
 
-        // 다음 페이지 존재 여부 확인을 위해 1개 더 조회
         List<PostListResponseDto> posts =
                 postRepository.findPosts(
                         sort,
@@ -226,6 +226,17 @@ public class PostService {
                 posts,
                 limit,
                 sort
+        );
+    }
+
+    // 주간 인기글 조회
+    public List<PostListResponseDto> getWeeklyPopularPosts() {
+
+        LocalDateTime startDate =
+                LocalDateTime.now().minusDays(7);
+
+        return postRepository.findWeeklyPopularPosts(
+                startDate
         );
     }
 
@@ -303,10 +314,6 @@ public class PostService {
                         case LATEST -> lastPost.postId();
                         case VIEW -> lastPost.viewCount();
                         case LIKE -> lastPost.likeCount();
-                        case POPULAR ->
-                                lastPost.viewCount()
-                                + lastPost.likeCount() * 25
-                                + lastPost.commentCount() * 15;
                     };
 
             nextCursor = new PostCursorDto(

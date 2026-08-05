@@ -5,6 +5,7 @@ import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PostRepositoryCustom {
@@ -24,5 +25,10 @@ public interface PostRepositoryCustom {
             Integer cursorSortValue,
             Integer cursorPostId,
             Pageable pageable
+    );
+
+    // 주간 인기글 조회
+    List<PostListResponseDto> findWeeklyPopularPosts(
+            LocalDateTime startDate
     );
 }
