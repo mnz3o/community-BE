@@ -16,6 +16,9 @@ spec:
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
 
+  minReadySeconds: {{ .Values.minReadySeconds }}
+  progressDeadlineSeconds: {{ .Values.progressDeadlineSeconds }}
+
   strategy:
     type: RollingUpdate
 
@@ -37,6 +40,18 @@ spec:
         env: {{ .Values.labels.env }}
 
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+
+      topologySpreadConstraints:
+        - maxSkew: {{ .Values.topologySpread.maxSkew }}
+          topologyKey: {{ .Values.topologySpread.topologyKey }}
+          whenUnsatisfiable: {{ .Values.topologySpread.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              app: {{ .Values.labels.app }}
+              tier: {{ .Values.labels.tier }}
+              env: {{ .Values.labels.env }}
+
       imagePullSecrets:
         - name: {{ .Values.imagePullSecret }}
 
@@ -45,6 +60,24 @@ spec:
 
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+            readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem }}
+            capabilities:
+              drop:
+                {{- range .Values.securityContext.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - "sleep {{ .Values.lifecycle.preStop.sleepSeconds }}"
 
           envFrom:
             - configMapRef:
@@ -56,6 +89,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.names.secret }}
                   key: DB_PASSWORD
+                  optional: false
 
           ports:
             - name: http

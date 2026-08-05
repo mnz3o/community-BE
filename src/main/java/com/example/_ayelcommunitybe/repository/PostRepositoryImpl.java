@@ -75,13 +75,7 @@ public class PostRepositoryImpl
 
         return postListQuery()
                 .where(
-                        // 삭제된 게시글 제외
                         post.deletedAt.isNull(),
-
-                        // 인기글 조회 시 최근 7일 게시글만 포함
-                        getPopularPeriodCondition(sort),
-
-                        // 정렬 방식에 따른 커서 조건
                         getCursorCondition(
                                 sort,
                                 cursorSortValue,
@@ -92,6 +86,25 @@ public class PostRepositoryImpl
                         getOrderSpecifiers(sort)
                 )
                 .limit(pageable.getPageSize())
+                .fetch();
+    }
+
+    // 주간 인기글 조회
+    @Override
+    public List<PostListResponseDto> findWeeklyPopularPosts(
+            LocalDateTime startDate
+    ) {
+
+        return postListQuery()
+                .where(
+                        post.deletedAt.isNull(),
+                        post.createdAt.goe(startDate)
+                )
+                .orderBy(
+                        getPopularScore().desc(),
+                        post.postId.desc()
+                )
+                .limit(10)
                 .fetch();
     }
 
@@ -119,13 +132,6 @@ public class PostRepositoryImpl
             case LIKE ->
                     new OrderSpecifier[]{
                             post.likeCount.desc(),
-                            post.postId.desc()
-                    };
-
-            // 인기 점수가 같으면 최신 게시글 우선
-            case POPULAR ->
-                    new OrderSpecifier[]{
-                            getPopularScore().desc(),
                             post.postId.desc()
                     };
         };
@@ -175,20 +181,6 @@ public class PostRepositoryImpl
                                                     post.postId.lt(cursorPostId)
                                             )
                             );
-
-            // 인기 점수가 작거나, 인기 점수가 같으면서 게시글 ID가 작은 게시글 조회
-            case POPULAR -> {
-                NumberExpression<Integer> popularScore =
-                        getPopularScore();
-
-                yield popularScore.lt(cursorSortValue)
-                        .or(
-                                popularScore.eq(cursorSortValue)
-                                        .and(
-                                                post.postId.lt(cursorPostId)
-                                        )
-                        );
-            }
         };
     }
 
@@ -221,26 +213,12 @@ public class PostRepositoryImpl
                 );
     }
 
-    // 인기글 점수 계산 {5 * (조회수 0.2 * 좋아요수 5 * 댓글수 * 3)}
+    // 인기글 점수 계산 {5 * (조회수 0.2 + 좋아요수 5 + 댓글수 * 3)}
     private NumberExpression<Integer> getPopularScore() {
 
         return post.viewCount
                 .add(post.likeCount.multiply(25))
                 .add(post.commentCount.multiply(15));
-    }
-
-    // 인기글 조회 시 최근 7일 조건 적용
-    private BooleanExpression getPopularPeriodCondition(
-            PostSortType sort
-    ) {
-
-        if (sort != PostSortType.POPULAR) {
-            return null;
-        }
-
-        return post.createdAt.goe(
-                LocalDateTime.now().minusDays(7)
-        );
     }
 
     // 검색 범위에 따른 검색 조건 생성

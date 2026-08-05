@@ -18,4 +18,4 @@ spec:
       port: {{ .Values.service.port }}
       targetPort: http
 
-  type: {{ .Values.service.type }} 
+  type: {{ .Values.service.type }}
