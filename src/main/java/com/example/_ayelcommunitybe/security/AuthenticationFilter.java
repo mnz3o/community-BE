@@ -60,11 +60,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        // 공개 조회
-        if (uri.startsWith("/posts") && method.equals("GET")) {
-            return true;
-        }
-
         // 업로드 파일 조회
         if (uri.startsWith("/uploads/")) {
             return true;
@@ -86,12 +81,46 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+
         // 기존 세션 조회
         HttpSession session =
                 request.getSession(false);
 
+        // 게시글 조회는 비로그인 사용자도 접근 가능
+        // 로그인한 사용자는 좋아요 여부 등을 확인할 수 있도록 request에 사용자 ID만 저장한 뒤 요청을 계속 진행
+        if (uri.startsWith("/posts")
+                && method.equals("GET")) {
+
+            if (session != null) {
+
+                Object userId =
+                        session.getAttribute(
+                                SessionConst.USER_ID
+                        );
+
+                if (userId != null) {
+                    request.setAttribute(
+                            SessionConst.USER_ID,
+                            userId
+                    );
+                }
+            }
+
+            filterChain.doFilter(
+                    request,
+                    response
+            );
+
+            return;
+        }
+
+        // 인증이 필요한 요청은 로그인 여부 확인
         if (session == null
-                || session.getAttribute(SessionConst.USER_ID) == null) {
+                || session.getAttribute(
+                SessionConst.USER_ID
+        ) == null) {
 
             response.setHeader(
                     "Access-Control-Allow-Origin",
@@ -128,9 +157,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        int userId = (int) session.getAttribute(
-                SessionConst.USER_ID
-        );
+        int userId =
+                (int) session.getAttribute(
+                        SessionConst.USER_ID
+                );
 
         // 컨트롤러에서 사용할 사용자 ID 저장
         request.setAttribute(

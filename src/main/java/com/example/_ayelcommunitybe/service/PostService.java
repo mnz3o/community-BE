@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.service;
 
+import com.example._ayelcommunitybe.config.RedisConfig;
 import com.example._ayelcommunitybe.constant.PostSearchType;
 import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.dto.post.*;
@@ -11,12 +12,12 @@ import com.example._ayelcommunitybe.exception.CustomException;
 import com.example._ayelcommunitybe.exception.ErrorCode;
 import com.example._ayelcommunitybe.finder.PostFinder;
 import com.example._ayelcommunitybe.finder.UserFinder;
+import com.example._ayelcommunitybe.repository.PostLikeRepository;
 import com.example._ayelcommunitybe.repository.PostRepository;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,10 +33,10 @@ public class PostService {
     private final PostRepository postRepository;
     private final StoredFileRepository storedFileRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final MessageSource messageSource;
     private final UserFinder userFinder;
     private final PostFinder postFinder;
-
+    private final PostCacheService postCacheService;
+    private final PostLikeRepository postLikeRepository;
 
     // 게시글 작성
     @Transactional(
@@ -105,57 +106,50 @@ public class PostService {
     }
 
     // 게시글 상세 조회
-    @Transactional
-    public PostResponseDto getPost(int postId) {
+    public PostResponseDto getPost(
+            Integer userId,
+            int postId
+    ) {
 
-        Post post = postFinder.findDetailById(postId);
+        PostResponseDto cachedPost =
+                postCacheService.getPostDetail(postId);
 
-        // 게시글 조회 이벤트 발행
+        boolean isLiked =
+                userId != null &&
+                        postLikeRepository
+                                .existsByUser_UserIdAndPost_PostId(
+                                        userId,
+                                        postId
+                                );
+
+        // 캐시 HIT 여부와 관계없이 조회 이벤트 발행
         eventPublisher.publishEvent(
                 new PostViewedEvent(postId)
         );
 
-        User user = post.getUser();
-
-        boolean isDeleted =
-                user.getDeletedAt() != null;
-
-        String nickname = isDeleted
-                ? messageSource.getMessage(
-                "user.deleted.nickname",
-                null,
-                LocaleContextHolder.getLocale()
-        )
-                : user.getNickname();
-
-        String profileFileUrl = null;
-
-        if (!isDeleted) {
-            profileFileUrl =
-                    storedFileRepository
-                            .findByUserAndIsActiveTrue(user)
-                            .map(StoredFile::getFileUrl)
-                            .orElse(null);
-        }
-
         return new PostResponseDto(
-                post.getPostId(),
-                post.getUser().getUserId(),
-                post.getTitle(),
-                post.getContent(),
-                nickname,
-                post.getViewCount(),
-                post.getLikeCount(),
-                post.getCommentCount(),
-                getFileUrls(post),
-                profileFileUrl,
-                post.getCreatedAt()
+                cachedPost.postId(),
+                cachedPost.userId(),
+                cachedPost.title(),
+                cachedPost.content(),
+                cachedPost.nickname(),
+                cachedPost.viewCount(),
+                cachedPost.likeCount(),
+                cachedPost.commentCount(),
+                cachedPost.fileUrls(),
+                cachedPost.profileFileUrl(),
+                cachedPost.createdAt(),
+                isLiked
         );
     }
 
     // 게시글 수정
     @Transactional(
             rollbackFor = Exception.class
+    )
+    @CacheEvict(
+            cacheNames = RedisConfig.POST_DETAIL_CACHE,
+            key = "#postId"
     )
     public void updatePost(
             int userId,
@@ -242,6 +236,10 @@ public class PostService {
 
     // 게시글 삭제
     @Transactional
+    @CacheEvict(
+            cacheNames = RedisConfig.POST_DETAIL_CACHE,
+            key = "#postId"
+    )
     public void deletePost(
             int userId,
             int postId) {
@@ -272,17 +270,6 @@ public class PostService {
                     ErrorCode.INVALID_SEARCH_KEYWORD
             );
         }
-    }
-
-    // 활성화된 파일 URL만 조회
-    private List<String> getFileUrls(
-            Post post) {
-
-        return post.getFiles()
-                .stream()
-                .filter(StoredFile::isActive)
-                .map(StoredFile::getFileUrl)
-                .toList();
     }
 
     // 게시글 목록 응답 생성

@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.service;
 
+import com.example._ayelcommunitybe.config.RedisConfig;
 import com.example._ayelcommunitybe.entity.Post;
 import com.example._ayelcommunitybe.entity.PostLike;
 import com.example._ayelcommunitybe.entity.User;
@@ -10,6 +11,7 @@ import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.PostLikeRepository;
 import com.example._ayelcommunitybe.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,10 @@ public class PostLikeService {
 
     // 좋아요 추가
     @Transactional
+    @CacheEvict(
+            cacheNames = RedisConfig.POST_DETAIL_CACHE,
+            key = "#postId"
+    )
     public void createLike(
             int userId,
             int postId) {
@@ -47,6 +53,10 @@ public class PostLikeService {
 
     // 좋아요 취소
     @Transactional
+    @CacheEvict(
+            cacheNames = RedisConfig.POST_DETAIL_CACHE,
+            key = "#postId"
+    )
     public void deleteLike(
             int userId,
             int postId) {

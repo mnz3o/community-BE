@@ -79,12 +79,14 @@ public class CommentController {
     // 댓글 삭제
     @DeleteMapping("/{commentId}")
     public ApiResponse<Void> deleteComment(
+            @PathVariable int postId,
             @PathVariable int commentId,
             @RequestAttribute(SessionConst.USER_ID) int userId
     ) {
 
         commentService.deleteComment(
                 userId,
+                postId,
                 commentId
         );
 
