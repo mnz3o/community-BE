@@ -107,12 +107,19 @@ public class PostController {
     // 게시글 상세 조회
     @GetMapping("/{postId}")
     public ApiResponse<PostResponseDto> getPost(
-            @PathVariable int postId
+            @PathVariable int postId,
+            @RequestAttribute(
+                    value = SessionConst.USER_ID,
+                    required = false
+            ) Integer userId
     ) {
 
         return ApiResponse.success(
                 "게시글 상세 조회 성공",
-                postService.getPost(postId)
+                postService.getPost(
+                        userId,
+                        postId
+                )
         );
     }
 

@@ -16,4 +16,10 @@ public interface PostLikeRepository
             User user,
             Post post
     );
+
+    // 사용자의 게시글 좋아요 여부 조회
+    boolean existsByUser_UserIdAndPost_PostId(
+            int userId,
+            int postId
+    );
 }

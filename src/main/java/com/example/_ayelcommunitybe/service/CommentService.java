@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.service;
 
+import com.example._ayelcommunitybe.config.RedisConfig;
 import com.example._ayelcommunitybe.dto.comment.CommentPageResponseDto;
 import com.example._ayelcommunitybe.dto.comment.CommentRequestDto;
 import com.example._ayelcommunitybe.dto.comment.CommentResponseDto;
@@ -14,6 +15,7 @@ import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.CommentRepository;
 import com.example._ayelcommunitybe.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,10 @@ public class CommentService {
 
     // 댓글 작성
     @Transactional
+    @CacheEvict(
+            cacheNames = RedisConfig.POST_DETAIL_CACHE,
+            key = "#postId"
+    )
     public int createComment(
             int userId,
             int postId,
@@ -105,20 +111,30 @@ public class CommentService {
 
     // 댓글 삭제
     @Transactional
+    @CacheEvict(
+            cacheNames = RedisConfig.POST_DETAIL_CACHE,
+            key = "#postId"
+    )
     public void deleteComment(
             int userId,
-            int commentId) {
+            int postId,
+            int commentId
+    ) {
 
         Comment comment = commentFinder.findById(commentId);
 
         validateCommentOwner(comment, userId);
 
+        if (comment.getPost().getPostId() != postId) {
+            throw new CustomException(
+                    ErrorCode.COMMENT_NOT_FOUND
+            );
+        }
+
         comment.delete();
 
-        Post post = comment.getPost();
-
         // 댓글 수 동기화
-        postRepository.decreaseCommentCount(post.getPostId());
+        postRepository.decreaseCommentCount(postId);
     }
 
     private void validateCommentOwner(

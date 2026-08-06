@@ -14,6 +14,7 @@ public record PostResponseDto(
         int commentCount,
         List<String> fileUrls,
         String profileFileUrl,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean isLiked
 ) {
 }
