@@ -17,6 +17,7 @@ import com.example._ayelcommunitybe.repository.PostRepository;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -201,6 +202,12 @@ public class PostService {
     }
 
     // 게시글 목록 조회
+    @Cacheable(
+            cacheNames = RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+            key = "{#sort, #limit}",
+            condition = "#cursorSortValue == null && #cursorPostId == null",
+            sync = true
+    )
     public PostPageResponseDto getPosts(
             PostSortType sort,
             Integer cursorSortValue,
@@ -224,6 +231,10 @@ public class PostService {
     }
 
     // 주간 인기글 조회
+    @Cacheable(
+            cacheNames = RedisConfig.WEEKLY_POPULAR_CACHE,
+            sync = true
+    )
     public List<PostListResponseDto> getWeeklyPopularPosts() {
 
         LocalDateTime startDate =

@@ -23,6 +23,7 @@ public class RedisConfig {
 
     public static final String POST_DETAIL_CACHE = "postDetail";
     public static final String WEEKLY_POPULAR_CACHE = "weeklyPopular";
+    public static final String POST_LIST_FIRST_PAGE_CACHE = "postListFirstPage";
 
     @Bean
     public CacheManager cacheManager(
@@ -74,6 +75,11 @@ public class RedisConfig {
                         Duration.ofMinutes(5)
                 );
 
+        RedisCacheConfiguration postListFirstPageConfiguration =
+                defaultConfiguration.entryTtl(
+                        Duration.ofSeconds(30)
+                );
+
         builder
                 .cacheDefaults(defaultConfiguration)
                 .withInitialCacheConfigurations(
@@ -81,7 +87,9 @@ public class RedisConfig {
                                 POST_DETAIL_CACHE,
                                 postDetailConfiguration,
                                 WEEKLY_POPULAR_CACHE,
-                                weeklyPopularConfiguration
+                                weeklyPopularConfiguration,
+                                POST_LIST_FIRST_PAGE_CACHE,
+                                postListFirstPageConfiguration
                         )
                 )
                 .transactionAware();
