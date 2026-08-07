@@ -47,11 +47,9 @@ public class CommentService {
         User user = userFinder.findById(userId);
         Post post = postFinder.findById(postId);
 
-        Comment comment =
-                new Comment(user, post, request.content());
+        Comment comment = new Comment(user, post, request.content());
 
-        Comment savedComment =
-                commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
 
         // 댓글 수 동기화
         postRepository.increaseCommentCount(postId);

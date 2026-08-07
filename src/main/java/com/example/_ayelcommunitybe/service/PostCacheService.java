@@ -72,8 +72,7 @@ public class PostCacheService {
 
         User user = post.getUser();
 
-        boolean isDeleted =
-                user.getDeletedAt() != null;
+        boolean isDeleted = user.getDeletedAt() != null;
 
         String nickname = isDeleted
                 ? messageSource.getMessage(

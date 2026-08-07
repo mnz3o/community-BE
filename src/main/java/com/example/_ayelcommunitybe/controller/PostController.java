@@ -6,6 +6,7 @@ import com.example._ayelcommunitybe.constant.SessionConst;
 import com.example._ayelcommunitybe.dto.ApiResponse;
 import com.example._ayelcommunitybe.dto.post.*;
 import com.example._ayelcommunitybe.service.PostService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -111,14 +112,18 @@ public class PostController {
             @RequestAttribute(
                     value = SessionConst.USER_ID,
                     required = false
-            ) Integer userId
+            ) Integer userId,
+            HttpServletRequest request
     ) {
+
+        String sessionId = request.getSession(true).getId();
 
         return ApiResponse.success(
                 "게시글 상세 조회 성공",
                 postService.getPost(
                         userId,
-                        postId
+                        postId,
+                        sessionId
                 )
         );
     }

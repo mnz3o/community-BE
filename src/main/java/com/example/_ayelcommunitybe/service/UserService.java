@@ -1,5 +1,6 @@
 package com.example._ayelcommunitybe.service;
 
+import com.example._ayelcommunitybe.config.RedisConfig;
 import com.example._ayelcommunitybe.dto.user.*;
 import com.example._ayelcommunitybe.entity.StoredFile;
 import com.example._ayelcommunitybe.entity.User;
@@ -9,6 +10,8 @@ import com.example._ayelcommunitybe.finder.UserFinder;
 import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import com.example._ayelcommunitybe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +64,20 @@ public class UserService {
 
     // 회원 정보 수정
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_DETAIL_CACHE,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.WEEKLY_POPULAR_CACHE,
+                    allEntries = true
+            )
+    })
     public void updateUser(
             int sessionUserId,
             int userId,

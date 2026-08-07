@@ -18,11 +18,14 @@ import com.example._ayelcommunitybe.repository.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,18 +41,25 @@ public class PostService {
     private final PostFinder postFinder;
     private final PostCacheService postCacheService;
     private final PostLikeRepository postLikeRepository;
+    private final StringRedisTemplate redisTemplate;
+    private static final Duration VIEW_COUNT_TTL = Duration.ofMinutes(10);
+    private static final String VIEW_COUNT_KEY_PREFIX = "postView:";
 
     // 게시글 작성
-    @Transactional(
-            rollbackFor = Exception.class
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(
+            cacheNames = {
+                    RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+                    RedisConfig.WEEKLY_POPULAR_CACHE
+            },
+            allEntries = true
     )
     public int createPost(
             int userId,
             PostCreateRequestDto request
     ) {
 
-        User user =
-                userFinder.findById(userId);
+        User user = userFinder.findById(userId);
 
         Post post =
                 new Post(
@@ -58,8 +68,7 @@ public class PostService {
                         request.content()
                 );
 
-        Post savedPost =
-                postRepository.save(post);
+        Post savedPost = postRepository.save(post);
 
         if (request.fileUrls() != null) {
             for (String fileUrl : request.fileUrls()) {
@@ -109,11 +118,11 @@ public class PostService {
     // 게시글 상세 조회
     public PostResponseDto getPost(
             Integer userId,
-            int postId
+            int postId,
+            String sessionId
     ) {
 
-        PostResponseDto cachedPost =
-                postCacheService.getPostDetail(postId);
+        PostResponseDto cachedPost = postCacheService.getPostDetail(postId);
 
         boolean isLiked =
                 userId != null &&
@@ -123,9 +132,10 @@ public class PostService {
                                         postId
                                 );
 
-        // 캐시 HIT 여부와 관계없이 조회 이벤트 발행
-        eventPublisher.publishEvent(
-                new PostViewedEvent(postId)
+        publishViewEventIfAllowed(
+                userId,
+                postId,
+                sessionId
         );
 
         return new PostResponseDto(
@@ -148,10 +158,20 @@ public class PostService {
     @Transactional(
             rollbackFor = Exception.class
     )
-    @CacheEvict(
-            cacheNames = RedisConfig.POST_DETAIL_CACHE,
-            key = "#postId"
-    )
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_DETAIL_CACHE,
+                    key = "#postId"
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.WEEKLY_POPULAR_CACHE,
+                    allEntries = true
+            )
+    })
     public void updatePost(
             int userId,
             int postId,
@@ -237,8 +257,7 @@ public class PostService {
     )
     public List<PostListResponseDto> getWeeklyPopularPosts() {
 
-        LocalDateTime startDate =
-                LocalDateTime.now().minusDays(7);
+        LocalDateTime startDate = LocalDateTime.now().minusDays(7);
 
         return postRepository.findWeeklyPopularPosts(
                 startDate
@@ -247,16 +266,25 @@ public class PostService {
 
     // 게시글 삭제
     @Transactional
-    @CacheEvict(
-            cacheNames = RedisConfig.POST_DETAIL_CACHE,
-            key = "#postId"
-    )
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_DETAIL_CACHE,
+                    key = "#postId"
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.WEEKLY_POPULAR_CACHE,
+                    allEntries = true
+            )
+    })
     public void deletePost(
             int userId,
             int postId) {
 
-        Post post =
-                postFinder.findDetailById(postId);
+        Post post = postFinder.findDetailById(postId);
 
         validatePostOwner(post, userId);
 
@@ -304,8 +332,7 @@ public class PostService {
 
         if (hasNext && !posts.isEmpty()) {
 
-            PostListResponseDto lastPost =
-                    posts.get(posts.size() - 1);
+            PostListResponseDto lastPost = posts.get(posts.size() - 1);
 
             int sortValue =
                     switch (sort) {
@@ -325,5 +352,41 @@ public class PostService {
                 nextCursor,
                 hasNext
         );
+    }
+
+    private void publishViewEventIfAllowed(
+            Integer userId,
+            int postId,
+            String sessionId
+    ) {
+
+        String viewerKey;
+
+        if (userId != null) {
+            viewerKey = "user:" + userId;
+        } else {
+            viewerKey = "session:" + sessionId;
+        }
+
+        String redisKey =
+                VIEW_COUNT_KEY_PREFIX
+                        + postId
+                        + ":"
+                        + viewerKey;
+
+        Boolean firstView =
+                redisTemplate
+                        .opsForValue()
+                        .setIfAbsent(
+                                redisKey,
+                                "1",
+                                VIEW_COUNT_TTL
+                        );
+
+        if (Boolean.TRUE.equals(firstView)) {
+            eventPublisher.publishEvent(
+                    new PostViewedEvent(postId)
+            );
+        }
     }
 }
