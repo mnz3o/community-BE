@@ -12,6 +12,7 @@ import com.example._ayelcommunitybe.repository.PostLikeRepository;
 import com.example._ayelcommunitybe.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,10 +28,20 @@ public class PostLikeService {
 
     // 좋아요 추가
     @Transactional
-    @CacheEvict(
-            cacheNames = RedisConfig.POST_DETAIL_CACHE,
-            key = "#postId"
-    )
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_DETAIL_CACHE,
+                    key = "#postId"
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.WEEKLY_POPULAR_CACHE,
+                    allEntries = true
+            )
+    })
     public void createLike(
             int userId,
             int postId) {
@@ -53,10 +64,20 @@ public class PostLikeService {
 
     // 좋아요 취소
     @Transactional
-    @CacheEvict(
-            cacheNames = RedisConfig.POST_DETAIL_CACHE,
-            key = "#postId"
-    )
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_DETAIL_CACHE,
+                    key = "#postId"
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.POST_LIST_FIRST_PAGE_CACHE,
+                    allEntries = true
+            ),
+            @CacheEvict(
+                    cacheNames = RedisConfig.WEEKLY_POPULAR_CACHE,
+                    allEntries = true
+            )
+    })
     public void deleteLike(
             int userId,
             int postId) {
