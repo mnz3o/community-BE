@@ -5,10 +5,7 @@ import com.example._ayelcommunitybe.constant.PostSortType;
 import com.example._ayelcommunitybe.dto.post.PostListResponseDto;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.core.types.dsl.StringExpression;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -187,6 +184,20 @@ public class PostRepositoryImpl
     // 게시글 목록과 검색에서 사용하는 공통 조회 쿼리
     private JPAQuery<PostListResponseDto> postListQuery() {
 
+        // 탈퇴한 회원은 닉네임을 '(알 수 없음)'으로 표시
+        StringExpression nicknameExpression =
+                new CaseBuilder()
+                        .when(post.user.deletedAt.isNotNull())
+                        .then("(알 수 없음)")
+                        .otherwise(post.user.nickname);
+
+        // 탈퇴한 회원은 프로필 이미지를 표시하지 않음
+        StringExpression profileFileUrlExpression =
+                new CaseBuilder()
+                        .when(post.user.deletedAt.isNotNull())
+                        .then((String) null)
+                        .otherwise(storedFile.fileUrl);
+
         return queryFactory
                 .select(
                         Projections.constructor(
@@ -194,11 +205,11 @@ public class PostRepositoryImpl
                                 post.postId,
                                 post.title,
                                 getContentPreview(),
-                                post.user.nickname,
+                                nicknameExpression,
                                 post.viewCount,
                                 post.likeCount,
                                 post.commentCount,
-                                storedFile.fileUrl,
+                                profileFileUrlExpression,
                                 post.createdAt
                         )
                 )
