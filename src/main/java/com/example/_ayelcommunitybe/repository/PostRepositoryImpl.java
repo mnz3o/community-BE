@@ -191,13 +191,6 @@ public class PostRepositoryImpl
                         .then("(알 수 없음)")
                         .otherwise(post.user.nickname);
 
-        // 탈퇴한 회원은 프로필 이미지를 표시하지 않음
-        StringExpression profileFileUrlExpression =
-                new CaseBuilder()
-                        .when(post.user.deletedAt.isNotNull())
-                        .then((String) null)
-                        .otherwise(storedFile.fileUrl);
-
         return queryFactory
                 .select(
                         Projections.constructor(
@@ -209,7 +202,7 @@ public class PostRepositoryImpl
                                 post.viewCount,
                                 post.likeCount,
                                 post.commentCount,
-                                profileFileUrlExpression,
+                                storedFile.fileUrl,
                                 post.createdAt
                         )
                 )
@@ -220,7 +213,8 @@ public class PostRepositoryImpl
                 .leftJoin(storedFile)
                 .on(
                         storedFile.user.eq(post.user),
-                        storedFile.isActive.isTrue()
+                        storedFile.isActive.isTrue(),
+                        post.user.deletedAt.isNull()
                 );
     }
 
